@@ -1,0 +1,62 @@
+unit ListView;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, IBConnection, sqldb, db, FileUtil, Forms, Controls,
+  Graphics, Dialogs, StdCtrls, ExtCtrls, DBGrids, ComCtrls, Menus, DbCtrls,
+  Grids, Meta;
+var
+  OpenForms: array of TForm;
+
+//procedure CreateForm (AddForm: TForm; Sender: TObject);
+//function GetOpenForm (NForm: string): TForm;
+
+implementation
+
+{procedure CreateForm (AddForm: TForm; Sender: TObject);
+var
+  s: string;
+begin
+  AddForm:= TForm.Create(Application);
+  s:= (Sender as TMenuItem).Caption;
+  with AddForm do
+  begin
+    Parent := nil;
+    Name:= string((Sender as TMenuItem).Caption);
+    Caption:= (Sender as TMenuItem).Caption;
+    Width:= 420;
+    Height:= 550;
+    Show;
+  end;
+  ShowMessage(AddForm.Name);
+  NewDBGrid:= TDBGrid.Create(AddForm);
+  with NewDBGrid do
+  begin
+    Parent := AddForm;
+    Name:= 'Grid' + (Sender as TMenuItem).Caption;
+    Width:= 400;
+    Height:= 490;
+    Left:= 10;
+    Top:= 10;
+    Visible:= true;
+  end;
+end;
+
+function GetOpenForm (NForm: string): TForm;
+var
+  i: integer;
+begin
+  for i:=0 to high(OpenForms) do
+  begin
+    if OpenForms[i].Caption = NForm then
+    begin
+      result:= OpenForms[i];
+      break;
+    end;
+  end;
+end; }
+end.
+
