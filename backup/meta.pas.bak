@@ -10,43 +10,57 @@ uses
   Grids, DBConnection;
 
 type
+
+  { TField }
+
   TField = class
   private
-    FDCaption: ansistring;
-    FDName: ansistring;
+    FDCaption: string;
+    FDName: string;
     FDWidth: integer;
+    RefTable: string;
+    RefField: string;
+    isReference: boolean;
   published
     property Name: string read FDName write FDName;
     property Caption: string read FDCaption write FDCaption;
     property Width: integer read FDWidth write FDWidth;
+    property RefS: boolean read isReference write isReference;
   end;
+
+  { TTable }
 
   TTable = class
   private
-    TBName: ansistring;
-    TBCaption: ansistring;
-    TBMenuIten: TMenuItem;
-    TBColumns: array of TField;
-    TBForm: TForm;
-    TBDBGrid: TDBGrid;
-    TBSQLQuery: TSQLQuery;
-    TBDataSource: TDataSource;
-    TBNavigator: TDBNavigator;
+    TBName: string;
+    TBCaption: string;
+    NewMenuIten: TMenuItem;
+    TableColumns: array of TField;
+    NewForm: TForm;
+    NewDBGrid: TDBGrid;
+    NewSQLQuery: TSQLQuery;
+    NewDataSource: TDataSource;
+    NewNavigator: TDBNavigator;
     FormStatus: boolean;
-    isCallColumn: boolean;
+    isReferences: boolean;
   public
+    procedure OnClickMenuItem (Sender: TObject);
+    procedure CreateMenuItem (Caption: string);
     procedure CreateForm (Sender: TObject);
     procedure DelForm (Sender: TObject);
     function GetForm(): TForm;
     procedure FormClose(Sender: TObject; var CanClose: boolean);
-    procedure CreateMenuItem (Caption: string);
-    procedure OnClickMenuItem (Sender: TObject);
-    procedure CreateCaptionColumn();
+    procedure CreateCaptionColumn(TableName: string);
     procedure GetCaptionColumn();
+    procedure CreateRef();
+    function GetColForNum (n: integer): TField;
+    function GetCol(CName: string): TField;
+    function SQLGen ():TStringList;
   published
     property Name: string read TBName write TBName;
     property Caption: string  read TBCaption write TBCaption;
     property FStatus: boolean  read FormStatus write FormStatus;
+    property RefStatus: boolean read isReferences write isReferences;
   end;
 
 var
@@ -57,15 +71,17 @@ var
   TranslateList: TStringList;
   ColWidth: integer;
 
-procedure CreateTable (TName: string);
-function FindTableofName (TName: string):TTable;
-
+procedure CreateTable (TableName: string);
+function FindTableofName (TableName: string):TTable;
+function CreateItemName (IName: string): string;
+function CheckRef (TableColumns: TField):boolean;
 implementation
 
 procedure TTable.CreateForm (Sender: TObject);
 begin
-  TBForm:= TForm.Create(Application);
-  with TBForm do
+  FStatus:= true;
+  NewForm:= TForm.Create(Application);
+  with NewForm do
   begin
     Parent := nil;
     Caption:= (Sender as TMenuItem).Caption;
@@ -75,137 +91,265 @@ begin
     BorderStyle:= bsSingle;
     Show;
   end;
-  TBDBGrid:= TDBGrid.Create(TBForm);
-  with TBDBGrid do
+  NewDBGrid:= TDBGrid.Create(NewForm);
+  with NewDBGrid do
   begin
-    Parent := TBForm;
+    Parent := NewForm;
     Width:= 400;
     Height:= 490;
     Left:= 10;
     Top:= 10;
     Visible:= true;
   end;
-  FStatus:= true;
-  TBSQLQuery:= TSQLQuery.Create(TBForm);
-  with TBSQLQuery do
+  NewSQLQuery:= TSQLQuery.Create(NewForm);
+  with NewSQLQuery do
   begin
     DataBase:= DataModule1.IBConnection1;
-    SQL.Text:= 'SELECT * FROM ' + TBName;
+    if isReferences then
+      SQL.Text:= SQLGen.Text
+    else
+      SQL.Text:= 'SELECT * FROM ' + TBName;
   end;
-  TBDataSource:= TDataSource.Create(TBForm);
-  with TBDataSource do
+  NewDataSource:= TDataSource.Create(NewForm);
+  with NewDataSource do
   begin
-    DataSet:= TBSQLQuery;
+    DataSet:= NewSQLQuery;
   end;
-  TBDBGrid.DataSource:= TBDataSource;
-  TBSQLQuery.Active:= true;
-  TBNavigator:= TDBNavigator.Create(TBForm);
-  with TBNavigator do
+  NewDBGrid.DataSource:= NewDataSource;
+  NewSQLQuery.Active:= true;
+  NewNavigator:= TDBNavigator.Create(NewForm);
+  with NewNavigator do
   begin
-    Parent:= TBForm;
-    DataSource:= TBDataSource;
+    Parent:= NewForm;
+    DataSource:= NewDataSource;
     Top:= 505;
     Left:= 65;
     Width:= 271;
     Height:= 30;
     Visible:= true;
   end;
-  if not(isCallColumn) then
-    CreateCaptionColumn();
-  GetCaptionColumn()
+  GetCaptionColumn();
 end;
 
-procedure TTable.CreateCaptionColumn();
+procedure TTable.CreateRef();
 var
-  i: integer;
-  s: ansistring;
+  i, k: integer;
+  s: string;
 begin
-  isCallColumn:= true;
-  for i:=0 to TBDbGrid.Columns.Count-1 do
+  for i:=0 to high(TableColumns) do
   begin
-    SetLength(TBColumns, length(TBColumns) + 1);
-    TBColumns[high(TBColumns)]:= TField.Create;
-    TBColumns[high(TBColumns)].Name:= TBDbGrid.Columns.Items[i].Title.Caption;
-    TBColumns[high(TBColumns)].Caption:=
-      TranslateList.Values[TBDbGrid.Columns.Items[i].Title.Caption];
-    if TBColumns[high(TBColumns)].Name = 'ID' then
-      TBColumns[high(TBColumns)].Width:= 50
-    else if TBColumns[high(TBColumns)].Name = 'NAME' then
-      TBColumns[high(TBColumns)].Width:= 200
-    else
-      TBColumns[high(TBColumns)].Width:= 100
+    s:= '';
+    k:= 1;
+    if CheckRef(TableColumns[i]) then
+    begin
+      if not isReferences then isReferences:= true;
+      TableColumns[i].RefS:= true;
+      while TableColumns[i].Name[k] <> '_'  do
+      begin
+        s+= TableColumns[i].Name[k];
+        inc(k);
+      end;
+      TableColumns[i].RefTable:= s;
+      s:= '';
+      k+= 1;
+      while TableColumns[i].Name[k] <> ' '  do
+      begin
+        s+= TableColumns[i].Name[k];
+        k+= 1;
+      end;
+      TableColumns[i].RefField:= s;
     end;
+  end;
+end;
+
+function TTable.GetCol(CName: string): TField;
+var
+  q: integer;
+begin
+  for q:=0 to high(TableColumns) do
+    if TableColumns[q].FDName = CName then
+    begin
+      result:= TableColumns[q];
+      break;
+    end;
+end;
+
+procedure CreateTable (TableName: string);
+var
+  s: string;
+begin
+  s:= CreateItemName (TableName);
+  SetLength(TableArr, length(TableArr) + 1);
+  TableArr[high(TableArr)]:= TTable.Create;
+  TableArr[high(TableArr)].Name:= s;
+  TableArr[high(TableArr)].Caption:=
+    AnsiToUtf8(TranslateList.Values[s]);
+  TableArr[high(TableArr)].CreateMenuItem
+   (AnsiToUtf8(TranslateList.Values[s]));
+  TableArr[high(TableArr)].CreateCaptionColumn(s);
+end;
+
+procedure TTable.CreateCaptionColumn(TableName: string);
+var
+  s: string;
+  TempDSource: TDataSource;
+  TempSQLQuery: TSQLQuery;
+  TempSQLTransaction: TSQLTransaction;
+begin
+  TempDSource:= TDataSource.Create(DataModule1);
+  TempSQLQuery:= TSQLQuery.Create(DataModule1);
+  TempSQLTransaction:= TSQLTransaction.Create(DataModule1);
+  TempDSource.DataSet:= TempSQLQuery;
+  TempSQLQuery.DataBase:= DataModule1.IBConnection1;
+  TempSQLQuery.Transaction:= TempSQLTransaction;
+  TempSQLTransaction.DataBase:= DataModule1.IBConnection1;
+  TempSQLQuery.Active:= false;
+  TempSQLQuery.SQL.Text:=
+    'select RDB$FIELD_NAME from rdb$relation_fields where RDB$RELATION_NAME = '
+    + '''' + TableName + '''';
+  TempSQLQuery.Open;
+  while not TempSQLQuery.EOF do
+  begin
+    s:= CreateItemName(TempSQLQuery.Fields[0].AsString);
+    SetLength(TableColumns, length(TableColumns) + 1);
+    TableColumns[high(TableColumns)] := TField.Create;
+    TableColumns[high(TableColumns)].Name:= s;
+    TableColumns[high(TableColumns)].Caption:=
+      AnsiToUtf8(TranslateList.Values[s]);
+    TempSQLQuery.Next;
+  end;
+  TempSQLQuery.Close;
+  TempDSource.Free;
+  TempSQLQuery.Free;
+  TempSQLTransaction.Free;
 end;
 
 procedure TTable.GetCaptionColumn();
 var
   i: integer;
 begin
-  for i:=0 to TBDbGrid.Columns.Count-1 do
+  for i:=0 to NewDbGrid.Columns.Count-1 do
   begin
-    TBDbGrid.Columns.Items[i].Title.Caption:= AnsiToUtf8(TBColumns[i].Caption);
-    TBDbGrid.Columns.Items[i].Width:= TBColumns[i].Width;
+    NewDbGrid.Columns.Items[i].Title.Caption:= TableColumns[i].Caption;
+    NewDbGrid.Columns.Items[i].Width:= 150;
   end;
 end;
 
 function TTable.GetForm(): TForm;
 begin
-  result:= TBForm;
+  result:= NewForm;
 end;
 
 procedure TTable.FormClose(Sender: TObject; var CanClose: boolean);
 begin
-  TBForm:= nil;
-  TBDBGrid:= nil;
-  TBDataSource:= nil;
-  TBSQLQuery:= nil;
+  NewForm:= nil;
+  NewDBGrid:= nil;
+  NewDataSource:= nil;
+  NewSQLQuery:= nil;
   FStatus:= false;
 end;
 
 procedure TTable.DelForm (Sender: TObject);
 begin
-  TBForm:= nil;
-  TBDBGrid:= nil;
-  TBDataSource:= nil;
-  TBSQLQuery:= nil;
+  NewForm:= nil;
+  NewDBGrid:= nil;
+  NewDataSource:= nil;
+  NewSQLQuery:= nil;
   FStatus:= false;
 end;
 
 procedure TTable.OnClickMenuItem (Sender: TObject);
 begin
   if FStatus then
-    TBForm.Show
+    NewForm.Show
   else
-    CreateForm (Sender);
+    CreateForm(Sender);
 end;
 
 procedure TTable.CreateMenuItem (Caption: string);
 begin
-  TBMenuIten:= TMenuItem.Create(MainItem);
-  TBMenuIten.Caption:= Caption;
-  TBMenuIten.OnClick:= @OnClickMenuItem;
-  MainItem.Add(TBMenuIten);
+  NewMenuIten:= TMenuItem.Create(MainItem);
+  NewMenuIten.Caption:= Caption;
+  NewMenuIten.OnClick:= @OnClickMenuItem;
+  MainItem.Add(NewMenuIten);
 end;
 
-procedure CreateTable (TName: string);
+function TTable.SQLGen ():TStringList;
+var
+  i, k, g: integer;
+  a, res: TStringList;
+  head, s1: string;
 begin
-  SetLength(TableArr, length(TableArr) + 1);
-  TableArr[high(TableArr)]:= TTable.Create;
-  TableArr[high(TableArr)].Name:= TName;
-  TableArr[high(TableArr)].Caption:= AnsiToUtf8(TranslateList.Values[TName]);
-  TableArr[high(TableArr)].CreateMenuItem (AnsiToUtf8(TranslateList.Values[TName]));
+  k:= 1;
+  a:= TStringList.Create;
+  res:= TStringList.Create;
+  head:= 'SELECT ';
+  for i:=0 to high(TableColumns) do
+  begin
+    if TableColumns[i].RefS then
+    begin
+      if g > 0 then head+= ', ';
+      head+= TableColumns[i].RefTable + '.' +
+        FindTableofName(TableColumns[i].RefTable).GetColForNum(1).Name;
+      inc(g);
+      s1:= 'INNER JOIN ' + TableColumns[i].RefTable + ' ON ' +
+       TableColumns[i].RefTable + '.' + TableColumns[i].RefField + ' = ' +
+       TBName + '.' + TableColumns[i].Name;
+      a.Append(s1);
+    end;
+  end;
+  res.Append(head);
+  res.Append(a.text);
+  result:= res;
 end;
 
-function FindTableofName (TName: string):TTable;
+function TTable.GetColForNum (n: integer): TField;
+begin
+  result:= (Self).TableColumns[n];
+end;
+
+{Other functions and procedures}
+
+function FindTableofName (TableName: string):TTable;
 var
   i: integer;
 begin
   for i:=0 to high(TableArr) do
-    if TableArr[i].Name = TName then
+    if TableArr[i].Name = TableName then
     begin
       result:= TableArr[i];
       break;
     end;
+end;
+
+ function CreateItemName (IName: string): string;
+ var
+   i: integer;
+   s: string;
+ begin
+   for i:=1 to length(IName) do
+   begin
+     if IName[i] <> ' ' then
+       s += IName[i]
+     else
+       break;
+   end;
+   result:= s;
+ end;
+
+ function CheckRef (TableColumns: TField):boolean;
+var
+  i: integer;
+begin
+  for i:=1 to length(TableColumns.Name) - 1 do
+  begin
+    if TableColumns.Name[i] = '_' then
+    begin
+      result:= true;
+      exit;
+    end;
+  end;
+  result:= false;
 end;
 
 end.

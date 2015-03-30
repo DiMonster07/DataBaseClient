@@ -17,8 +17,6 @@ type
     SQLQuery: TSQLQuery;
     SQLTransaction1: TSQLTransaction;
     procedure DataModuleCreate(Sender: TObject);
-  private
-    { private declarations }
   public
     procedure DBConnect ();
     procedure DBDisConnect ();

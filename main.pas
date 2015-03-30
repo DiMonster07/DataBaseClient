@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, IBConnection, sqldb, db, FileUtil, Forms, Controls,
   Graphics, Dialogs, StdCtrls, ExtCtrls, DBGrids, ComCtrls, Menus, DbCtrls,
-  Grids, Meta, ListView, DBConnection;
+  Grids, Meta, DBConnection;
 
 type
 
@@ -31,8 +31,6 @@ type
 
 var
   ProgramForm: TProgramForm;
-
-function CreateItemName (IName: string): string;
 
 implementation
 {$R *.lfm}
@@ -64,9 +62,9 @@ end;
 
  procedure TProgramForm.CreateMenuTable ();
  var
-   q:integer;
+   i:integer;
+   s: string;
  begin
-   q:=0;
    MainItem:= DirItem;
    DataModule1.SQLQuery.Active:= false;
    DataModule1.SQLQuery.SQL.Text:=
@@ -76,26 +74,12 @@ end;
    TranslateList.LoadFromFile('Meta.in');
    while not DataModule1.SQLQuery.EOF do
    begin
-     CreateTable(CreateItemName(DataModule1.SQLQuery.Fields[0].AsString));
+     CreateTable(DataModule1.SQLQuery.Fields[0].AsString);
      DataModule1.SQLQuery.Next;
-     q+= 1;
    end;
+   for i:=0 to high(TableArr) do
+     TableArr[i].CreateRef;
    DataModule1.SQLQuery.Close;
- end;
-
- function CreateItemName (IName: string): string;
- var
-   i: integer;
-   s: string;
- begin
-   for i:=1 to length(IName) do
-   begin
-     if IName[i] <> ' ' then
-       s += IName[i]
-     else
-       break;
-   end;
-   result:= s;
  end;
 end.
 

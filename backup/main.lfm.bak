@@ -1,7 +1,7 @@
 object ProgramForm: TProgramForm
-  Left = 785
+  Left = 779
   Height = 583
-  Top = 130
+  Top = 126
   Width = 820
   Caption = 'ProgramForm'
   Constraints.MinHeight = 583
@@ -11,8 +11,8 @@ object ProgramForm: TProgramForm
   OnPaint = FormPaint
   LCLVersion = '1.2.4.0'
   object MainMenu1: TMainMenu
-    left = 118
-    top = 60
+    left = 24
+    top = 8
     object FileItem: TMenuItem
       Caption = 'Файл'
     end

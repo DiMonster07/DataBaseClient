@@ -7,7 +7,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main, meta, ListView,  DBConnection;
+  Forms, main, meta, DBConnection;
 
 {$R *.res}
 

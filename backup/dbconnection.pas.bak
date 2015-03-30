@@ -36,7 +36,7 @@ begin
 
 end;
 
-procedure TDataModule1.DBConnect (DBName, Pass, UserName: string);
+procedure TDataModule1.DBConnect ();
 begin
   IBConnection1.DatabaseName:= 'D:\Firebird2_5\mydb\TIMETABLE.FDB';
   IBConnection1.Password:= 'masterkey';
