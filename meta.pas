@@ -1,6 +1,6 @@
 unit meta;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$LongStrings On}
 
 interface
 
@@ -78,7 +78,10 @@ function CheckRef (TableColumns: TField):boolean;
 implementation
 
 procedure TTable.CreateForm (Sender: TObject);
+var
+  s: TStringList;
 begin
+  s:= TStringList.Create;
   FStatus:= true;
   NewForm:= TForm.Create(Application);
   with NewForm do
@@ -106,7 +109,9 @@ begin
   begin
     DataBase:= DataModule1.IBConnection1;
     if isReferences then
-      SQL.Text:= SQLGen.Text
+    begin
+      SQL.Text:= SQLGen.Text;
+    end
     else
       SQL.Text:= 'SELECT * FROM ' + TBName;
   end;
@@ -152,7 +157,7 @@ begin
       TableColumns[i].RefTable:= s;
       s:= '';
       k+= 1;
-      while TableColumns[i].Name[k] <> ' '  do
+      while k < length(TableColumns[i].Name) + 1  do
       begin
         s+= TableColumns[i].Name[k];
         k+= 1;
@@ -182,10 +187,8 @@ begin
   SetLength(TableArr, length(TableArr) + 1);
   TableArr[high(TableArr)]:= TTable.Create;
   TableArr[high(TableArr)].Name:= s;
-  TableArr[high(TableArr)].Caption:=
-    AnsiToUtf8(TranslateList.Values[s]);
-  TableArr[high(TableArr)].CreateMenuItem
-   (AnsiToUtf8(TranslateList.Values[s]));
+  TableArr[high(TableArr)].Caption:=TranslateList.Values[s];
+  TableArr[high(TableArr)].CreateMenuItem(TranslateList.Values[s]);
   TableArr[high(TableArr)].CreateCaptionColumn(s);
 end;
 
@@ -214,8 +217,11 @@ begin
     SetLength(TableColumns, length(TableColumns) + 1);
     TableColumns[high(TableColumns)] := TField.Create;
     TableColumns[high(TableColumns)].Name:= s;
-    TableColumns[high(TableColumns)].Caption:=
-      AnsiToUtf8(TranslateList.Values[s]);
+    TableColumns[high(TableColumns)].Caption:= TranslateList.Values[s];
+    if s = 'ID' then
+      TableColumns[high(TableColumns)].Width:= 40
+    else
+      TableColumns[high(TableColumns)].Width:= 200;
     TempSQLQuery.Next;
   end;
   TempSQLQuery.Close;
@@ -231,7 +237,7 @@ begin
   for i:=0 to NewDbGrid.Columns.Count-1 do
   begin
     NewDbGrid.Columns.Items[i].Title.Caption:= TableColumns[i].Caption;
-    NewDbGrid.Columns.Items[i].Width:= 150;
+    NewDbGrid.Columns.Items[i].Width:= TableColumns[i].Width;
   end;
 end;
 
@@ -277,25 +283,36 @@ end;
 function TTable.SQLGen ():TStringList;
 var
   i, k, g: integer;
-  a, res: TStringList;
-  head, s1: string;
+  a, b, res: TStringList;
+  head: string;
+  s1, s2, s3: String;
+  output: text;
 begin
   k:= 1;
+  g:= 0;
   a:= TStringList.Create;
+  b:= TStringList.Create;
   res:= TStringList.Create;
   head:= 'SELECT ';
+  a.Append('FROM ' + TBName);
   for i:=0 to high(TableColumns) do
   begin
     if TableColumns[i].RefS then
     begin
       if g > 0 then head+= ', ';
-      head+= TableColumns[i].RefTable + '.' +
-        FindTableofName(TableColumns[i].RefTable).GetColForNum(1).Name;
+      head+= TableColumns[i].RefTable + 'S.' +
+        FindTableofName(TableColumns[i].RefTable + 'S').TableColumns[1].Name;
       inc(g);
-      s1:= 'INNER JOIN ' + TableColumns[i].RefTable + ' ON ' +
-       TableColumns[i].RefTable + '.' + TableColumns[i].RefField + ' = ' +
-       TBName + '.' + TableColumns[i].Name;
-      a.Append(s1);
+      s1:= 'INNER JOIN ' + TableColumns[i].RefTable + 'S ON ' +
+        TableColumns[i].RefTable + 'S.' + TableColumns[i].RefField +
+        ' = ' + TBName + '.' + TableColumns[i].Name;
+      b.add(s1);
+      a.Append(b.text);
+      b.clear;
+    end
+    else
+    begin
+      head+= ' ' + TableColumns[i].Name;
     end;
   end;
   res.Append(head);

@@ -1,7 +1,7 @@
 object ProgramForm: TProgramForm
-  Left = 779
+  Left = 778
   Height = 583
-  Top = 126
+  Top = 121
   Width = 820
   Caption = 'ProgramForm'
   Constraints.MinHeight = 583
