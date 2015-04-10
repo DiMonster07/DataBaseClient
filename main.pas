@@ -5,9 +5,9 @@ unit main;
 interface
 
 uses
-  Classes, SysUtils, IBConnection, sqldb, db, FileUtil, Forms, Controls,
-  Graphics, Dialogs, StdCtrls, ExtCtrls, DBGrids, ComCtrls, Menus, DbCtrls,
-  Grids, Meta, DBConnection;
+  Classes, SysUtils, IBConnection, sqldb, FileUtil, Forms, Controls,
+  Graphics, Dialogs, StdCtrls, ExtCtrls, Menus, DbCtrls,
+  Grids, Buttons, ActnList, ComCtrls, DBGrids, Meta, DBConnection;
 
 type
 
@@ -23,19 +23,19 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure CreateMenuTable ();
+    procedure OnClickMenuItem (Sender: TObject);
   private
     { private declarations }
   public
     { public declarations }
   end;
 
+
 var
   ProgramForm: TProgramForm;
-
 implementation
 {$R *.lfm}
 { ProgramForm }
-
 
 procedure TProgramForm.FormCreate(Sender: TObject);
 begin
@@ -62,24 +62,40 @@ end;
 
  procedure TProgramForm.CreateMenuTable ();
  var
-   i:integer;
+   MenuItem: TMenuItem;
+   i, c:integer;
    s: string;
  begin
-   MainItem:= DirItem;
    DataModule1.SQLQuery.Active:= false;
    DataModule1.SQLQuery.SQL.Text:=
      'SELECT RDB$RELATION_NAME FROM RDB$RELATIONS WHERE RDB$SYSTEM_FLAG = 0';
    DataModule1.SQLQuery.Open;
    TranslateList:= TStringList.Create;
    TranslateList.LoadFromFile('Meta.in');
+   c:= 0;
    while not DataModule1.SQLQuery.EOF do
    begin
-     CreateTable(DataModule1.SQLQuery.Fields[0].AsString);
+     s:= CreateItemName(DataModule1.SQLQuery.Fields[0].AsString);
+     CreateTable(s);
+     MenuItem:= TMenuItem.Create(DirItem);
+     MenuItem.Caption:= TranslateList.Values[s];
+     MenuItem.OnClick:= @OnClickMenuItem;
+     MenuItem.Tag:= c;
+     DirItem.Add(MenuItem);
+     inc(c);
      DataModule1.SQLQuery.Next;
    end;
    for i:=0 to high(TableArr) do
      TableArr[i].CreateRef;
    DataModule1.SQLQuery.Close;
  end;
+procedure TProgramForm.OnClickMenuItem (Sender: TObject);
+begin
+  if TableArr[(Sender as TMenuItem).Tag].FStatus then
+    TableArr[(Sender as TMenuItem).Tag].GetForm.Show
+  else
+    TableArr[(Sender as TMenuItem).Tag].CreateForm(Sender);
+end;
+
 end.
 

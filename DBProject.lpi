@@ -9,7 +9,6 @@
       <Title Value="DBProject"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
-      <Icon Value="0"/>
     </General>
     <i18n>
       <EnableI18N LFM="False"/>
@@ -39,7 +38,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="5">
+    <Units Count="6">
       <Unit0>
         <Filename Value="DBProject.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -71,6 +70,14 @@
         <ResourceBaseClass Value="DataModule"/>
         <UnitName Value="DBConnection"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="formgen.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormTable"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="FormGen"/>
+      </Unit5>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

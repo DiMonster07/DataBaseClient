@@ -1,73 +1,83 @@
 unit meta;
 
-{$mode objfpc}{$H+}{$LongStrings On}
+{$mode objfpc}{$H+}
 
 interface
 
 uses
   Classes, SysUtils, IBConnection, sqldb, db, FileUtil, Forms, Controls,
-  Graphics, Dialogs, StdCtrls, ExtCtrls, DBGrids, ComCtrls, Menus, DbCtrls,
-  Grids, DBConnection;
+  Graphics, Dialogs, ExtCtrls, Menus, DbCtrls,
+  Grids, DBConnection, FormGen, StdCtrls, Buttons;
 
 type
+
+  TPointFilter = ^TFilter;
+  TTypeField = (TInt, TStr);
+  TTypeOrder = (Up, Down, None);
 
   { TField }
 
   TField = class
   private
-    FDCaption: string;
-    FDName: string;
-    FDWidth: integer;
+    FCaption: string;
+    FName: string;
+    FWidth: integer;
     RefTable: string;
     RefField: string;
+    FType: TTypeField;
     isReference: boolean;
+    isOrder: TTypeOrder;
   published
-    property Name: string read FDName write FDName;
-    property Caption: string read FDCaption write FDCaption;
-    property Width: integer read FDWidth write FDWidth;
+    property Name: string read FName write FName;
+    property Caption: string read FCaption write FCaption;
+    property Width: integer read FWidth write FWidth;
     property RefS: boolean read isReference write isReference;
+    property TypeField: TTypeField read FType write FType;
+    property OrderStatus: TTypeOrder read isOrder write isOrder;
   end;
 
   { TTable }
 
   TTable = class
   private
-    TBName: string;
-    TBCaption: string;
-    NewMenuIten: TMenuItem;
+    FName: string;
+    FCaption: string;
+    FForm: TFormTable;
     TableColumns: array of TField;
-    NewForm: TForm;
-    NewDBGrid: TDBGrid;
-    NewSQLQuery: TSQLQuery;
-    NewDataSource: TDataSource;
-    NewNavigator: TDBNavigator;
+    Filters: array of TFilter;
     FormStatus: boolean;
     isReferences: boolean;
+    isFiltred: boolean;
+    isSort: boolean;
   public
-    procedure OnClickMenuItem (Sender: TObject);
-    procedure CreateMenuItem (Caption: string);
     procedure CreateForm (Sender: TObject);
-    procedure DelForm (Sender: TObject);
     function GetForm(): TForm;
-    procedure FormClose(Sender: TObject; var CanClose: boolean);
+    procedure FormClose();
     procedure CreateCaptionColumn(TableName: string);
     procedure GetCaptionColumn();
     procedure CreateRef();
     function GetColForNum (n: integer): TField;
     function GetCol(CName: string): TField;
     function SQLGen ():TStringList;
+    procedure DelFilter(Sender: TObject);
+    procedure ApplyFilter (Sender: TObject);
+    procedure AddFilter ();
+    procedure AddQueryFilter ();
+    procedure CreateQueryParams (APointer: TPointFilter);
+    procedure OnColumnClick(ANum: integer);
+    function CreateSortQuery (): string;
   published
-    property Name: string read TBName write TBName;
-    property Caption: string  read TBCaption write TBCaption;
+    property Name: string read FName write FName;
+    property Caption: string  read FCaption write FCaption;
     property FStatus: boolean  read FormStatus write FormStatus;
     property RefStatus: boolean read isReferences write isReferences;
+    property FiltStatus: boolean read isFiltred write isFiltred;
+    property SortStatus: boolean read isSort write isSort;
   end;
 
 var
   TableArr: array of TTable;
-  NameTable: array of TField;
   TBConnection: TIBConnection;
-  MainItem: TMenuItem;
   TranslateList: TStringList;
   ColWidth: integer;
 
@@ -78,62 +88,237 @@ function CheckRef (TableColumns: TField):boolean;
 implementation
 
 procedure TTable.CreateForm (Sender: TObject);
-var
-  s: TStringList;
 begin
-  s:= TStringList.Create;
-  FStatus:= true;
-  NewForm:= TForm.Create(Application);
-  with NewForm do
+  FForm:= TFormTable.Create(Application);
+  FForm.Tag:= (Sender as TMenuItem).Tag;
+  FForm.Caption:= FCaption;
+  if isReferences then
+    FForm.FSQLQuery.SQL.Text:= SQLGen.Text
+  else
   begin
-    Parent := nil;
-    Caption:= (Sender as TMenuItem).Caption;
-    Width:= 420;
-    Height:= 550;
-    OnCloseQuery:= @FormClose;
-    BorderStyle:= bsSingle;
-    Show;
+    FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName;
   end;
-  NewDBGrid:= TDBGrid.Create(NewForm);
-  with NewDBGrid do
-  begin
-    Parent := NewForm;
-    Width:= 400;
-    Height:= 490;
-    Left:= 10;
-    Top:= 10;
-    Visible:= true;
-  end;
-  NewSQLQuery:= TSQLQuery.Create(NewForm);
-  with NewSQLQuery do
-  begin
-    DataBase:= DataModule1.IBConnection1;
-    if isReferences then
-    begin
-      SQL.Text:= SQLGen.Text;
-    end
-    else
-      SQL.Text:= 'SELECT * FROM ' + TBName;
-  end;
-  NewDataSource:= TDataSource.Create(NewForm);
-  with NewDataSource do
-  begin
-    DataSet:= NewSQLQuery;
-  end;
-  NewDBGrid.DataSource:= NewDataSource;
-  NewSQLQuery.Active:= true;
-  NewNavigator:= TDBNavigator.Create(NewForm);
-  with NewNavigator do
-  begin
-    Parent:= NewForm;
-    DataSource:= NewDataSource;
-    Top:= 505;
-    Left:= 65;
-    Width:= 271;
-    Height:= 30;
-    Visible:= true;
-  end;
+  FForm.FSQLQuery.Active:= true;
   GetCaptionColumn();
+  FStatus:= true;
+  FForm.Show;
+end;
+
+procedure TTable.OnColumnClick(ANum: integer);
+var
+  s: string;
+begin
+  case TableColumns[ANum].isOrder of
+    Up: TableColumns[ANum].isOrder:= Down;
+    Down: TableColumns[ANum].isOrder:= None;
+    None: TableColumns[ANum].isOrder:= Up;
+  end;
+  FForm.FSQLQuery.Active:= false;
+  s:= CreateSortQuery;
+  if Self.isSort then
+  begin
+    FForm.FSQLQuery.SQL.Delete(FForm.FSQLQuery.SQL.Count - 1);
+    if s <> '' then
+      FForm.FSQLQuery.SQL.Append(CreateSortQuery)
+    else
+      Self.isSort:= false;
+  end
+  else
+  begin
+    if s <> '' then
+    begin
+      FForm.FSQLQuery.SQL.Append(s);
+      Self.isSort:= true;
+    end
+  end;
+  FForm.FSQLQuery.Active:= true;
+  GetCaptionColumn();
+end;
+
+function TTable.CreateSortQuery (): string;
+var
+  i, c: integer;
+   s, ts: string;
+begin
+  c:= 0;
+  for i:= 0 to high(TableColumns) do
+  begin
+    ts:= '';
+    case TableColumns[i].isOrder of
+      Up:
+        begin
+          if TableColumns[i].RefS then
+            ts:= TableColumns[i].RefTable + '_' +
+              TableColumns[i].RefField + ' ASC'
+          else
+            ts:= FName + '.' + TableColumns[i].Name + ' ASC';
+          if c <> 0 then
+            s:= s + ',' + ts
+          else
+            s:= s + ts;
+          inc(c);
+        end;
+      Down:
+        begin
+          if TableColumns[i].RefS then
+            ts:= TableColumns[i].RefTable + '_' +
+              TableColumns[i].RefField + ' DESC'
+          else
+            ts:= FName + '.' + TableColumns[i].Name + ' DESC';
+          if c <> 0 then
+            s:= s + ',' + ts
+          else
+            s:= s + ts;
+          inc(c);
+        end;
+    end;
+  end;
+  if c <> 0 then
+    s:= 'ORDER BY ' + s;
+  result:= s;
+end;
+
+procedure TTable.DelFilter(Sender: TObject);
+var
+  i: integer;
+begin
+  if ((Sender as TSpeedButton).Tag <> high(Filters)) and
+    (length(Filters) <> 1) then
+    for i:=(Sender as TSpeedButton).Tag + 1 to high(Filters) do
+    begin
+      Filters[i - 1]:= nil;
+      Filters[i - 1]:= Filters[i];
+      Filters[i]:= nil;
+      Filters[i - 1].ChangePos(i - 1);
+      if Filters[i - 1].isApply then
+      begin
+        Filters[i - 1].Parametr.Name:= 'param' + IntToStr(i - 1);
+        CreateQueryParams(@Filters[i - 1]);
+      end;
+    end
+  else
+  if length(Filters) = 1 then
+  begin
+    FForm.FSQLQuery.Active:= false;
+    if isReferences then
+      FForm.FSQLQuery.SQL.Text:= SQLGen.Text
+    else
+    begin
+      FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName;
+    end;
+    FForm.FSQLQuery.Active:= true;
+    GetCaptionColumn();
+    Self.isFiltred:= false;
+  end;
+  SetLength(Filters, length(Filters) - 1);
+  AddQueryFilter;
+end;
+
+procedure TTable.ApplyFilter (Sender: TObject);
+var
+  k: integer;
+  temp: ^TFilter;
+begin
+  temp:= @Filters[(Sender as TSpeedButton).Tag];
+  temp^.isApply:= true;
+  temp^.Parametr:= TParametr.Create;
+  temp^.Parametr.Name:= 'param' + IntToStr((Sender as TSpeedButton).Tag);
+  temp^.Parametr.NameAction:= temp^.FActionCB.Text;
+  temp^.Parametr.Value:= temp^.ValueEdit.Text;
+  k:= temp^.FNameCB.ItemIndex;
+  temp^.Parametr.Num:= k;
+  if (Self).RefStatus then
+  begin
+    temp^.Parametr.NameField:=  FName + '.' +
+      TableColumns[k].RefTable + '_' + TableColumns[k].RefField;
+  end
+  else
+  begin
+    temp^.Parametr.NameField:= FName + '.' + TableColumns[k].Name;
+  end;
+  CreateQueryParams(temp);
+  AddQueryFilter;
+end;
+
+procedure TTable.CreateQueryParams (APointer: TPointFilter);
+begin
+  if APointer^.Parametr.NameAction = 'включает' then
+  begin
+    APointer^.Parametr.Query:= APointer^.Parametr.NameField + ' ' +
+      'LIKE :' + APointer^.Parametr.Name + ' ';
+    APointer^.Parametr.Like:= true;
+  end
+  else
+    APointer^.Parametr.Query:= APointer^.Parametr.NameField + ' ' +
+      APointer^.Parametr.NameAction + ' ' + ':' + APointer^.Parametr.Name + ' ';
+end;
+
+procedure TTable.AddQueryFilter ();
+var
+  i, c: integer;
+  isNotFirst: boolean = false;
+begin
+  FForm.FSQLQuery.Active:= false;
+  for i:=0 to high(Filters) do
+  begin
+    if Filters[i].isApply then
+    begin
+      inc(c);
+      if not isNotFirst then
+      begin
+        if Self.isReferences then
+        begin
+          FForm.FSQLQuery.SQL.Text:= SQLGen.Text + ' ' +
+          ' where ' +  Filters[i].Parametr.Query;
+        end
+        else
+        begin
+          FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName +
+          ' where ' +  Filters[i].Parametr.Query;
+        end;
+      end
+      else
+        FForm.FSQLQuery.SQL.Text:= FForm.FSQLQuery.SQL.Text +
+          ' and ' + Filters[i].Parametr.Query;
+      if Filters[i].Parametr.Like then
+      begin
+        FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
+          Filters[i].Parametr.Value + '%';
+      end
+      else
+      begin
+        if Self.TableColumns[Filters[i].Parametr.Num].TypeField = TInt then
+          FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
+            Filters[i].Parametr.Value
+        else
+          FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:= '''' +
+            Filters[i].Parametr.Value + '''';
+      end;
+      isNotFirst:= true;
+    end;
+  end;
+  FForm.FSQLQuery.SQL.Append(CreateSortQuery);
+  FForm.FSQLQuery.Active:= true;
+  GetCaptionColumn();
+  FiltStatus:= true;
+end;
+
+procedure TTable.AddFilter ();
+var
+  TempList: TStringList;
+  i: integer;
+begin
+  if length(Filters) > 12 then exit;
+  SetLength(Filters, length(Filters) + 1);
+  Filters[high(Filters)]:= TFilter.Create;
+  Filters[high(Filters)].CreateFilter(FForm.FilterPanel, high(Filters));
+  TempList:= TStringList.Create;
+  for i:=0 to FForm.FDBGrid.Columns.Count - 1 do
+  begin
+    TempList.Append(TableColumns[i].Caption)
+  end;
+  Filters[high(Filters)].FillCB(TempList);
+  TempList.Destroy;
 end;
 
 procedure TTable.CreateRef();
@@ -172,7 +357,7 @@ var
   q: integer;
 begin
   for q:=0 to high(TableColumns) do
-    if TableColumns[q].FDName = CName then
+    if TableColumns[q].FName = CName then
     begin
       result:= TableColumns[q];
       break;
@@ -186,10 +371,9 @@ begin
   s:= CreateItemName (TableName);
   SetLength(TableArr, length(TableArr) + 1);
   TableArr[high(TableArr)]:= TTable.Create;
-  TableArr[high(TableArr)].Name:= s;
-  TableArr[high(TableArr)].Caption:=TranslateList.Values[s];
-  TableArr[high(TableArr)].CreateMenuItem(TranslateList.Values[s]);
-  TableArr[high(TableArr)].CreateCaptionColumn(s);
+  TableArr[high(TableArr)].Name:= TableName;
+  TableArr[high(TableArr)].Caption:=TranslateList.Values[TableName];
+  TableArr[high(TableArr)].CreateCaptionColumn(TableName);
 end;
 
 procedure TTable.CreateCaptionColumn(TableName: string);
@@ -208,16 +392,23 @@ begin
   TempSQLTransaction.DataBase:= DataModule1.IBConnection1;
   TempSQLQuery.Active:= false;
   TempSQLQuery.SQL.Text:=
-    'select RDB$FIELD_NAME from rdb$relation_fields where RDB$RELATION_NAME = '
-    + '''' + TableName + '''';
+    'select  R.RDB$FIELD_NAME, F.RDB$FIELD_TYPE ' +
+    'from RDB$FIELDS F, RDB$RELATION_FIELDS R where F.RDB$FIELD_NAME = ' +
+    'R.RDB$FIELD_SOURCE and R.RDB$SYSTEM_FLAG = 0 and RDB$RELATION_NAME = ' +
+    '''' + TableName + '''';
   TempSQLQuery.Open;
   while not TempSQLQuery.EOF do
   begin
     s:= CreateItemName(TempSQLQuery.Fields[0].AsString);
     SetLength(TableColumns, length(TableColumns) + 1);
     TableColumns[high(TableColumns)] := TField.Create;
+    TableColumns[high(TableColumns)].isOrder:= none;
     TableColumns[high(TableColumns)].Name:= s;
     TableColumns[high(TableColumns)].Caption:= TranslateList.Values[s];
+    if TempSQLQuery.Fields[1].AsInteger = 8 then
+      TableColumns[high(TableColumns)].FType:= TInt
+    else
+      TableColumns[high(TableColumns)].FType:= TStr;
     if s = 'ID' then
       TableColumns[high(TableColumns)].Width:= 40
     else
@@ -234,67 +425,46 @@ procedure TTable.GetCaptionColumn();
 var
   i: integer;
 begin
-  for i:=0 to NewDbGrid.Columns.Count-1 do
+  for i:=0 to FForm.FDBGrid.Columns.Count-1 do
   begin
-    NewDbGrid.Columns.Items[i].Title.Caption:= TableColumns[i].Caption;
-    NewDbGrid.Columns.Items[i].Width:= TableColumns[i].Width;
+    case TableColumns[i].isOrder of
+    None: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+      TableColumns[i].Caption;
+    Down: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+      TableColumns[i].Caption + ' ↓ ';
+    Up: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+      TableColumns[i].Caption + ' ↑ ';
+    end;
+    FForm.FDBGrid.Columns.Items[i].Width:= TableColumns[i].Width;
   end;
 end;
 
 function TTable.GetForm(): TForm;
 begin
-  result:= NewForm;
+  result:= FForm;
 end;
 
-procedure TTable.FormClose(Sender: TObject; var CanClose: boolean);
+procedure TTable.FormClose();
 begin
-  NewForm:= nil;
-  NewDBGrid:= nil;
-  NewDataSource:= nil;
-  NewSQLQuery:= nil;
+  FForm:= nil;
+  SetLength(Filters, 0);
   FStatus:= false;
-end;
-
-procedure TTable.DelForm (Sender: TObject);
-begin
-  NewForm:= nil;
-  NewDBGrid:= nil;
-  NewDataSource:= nil;
-  NewSQLQuery:= nil;
-  FStatus:= false;
-end;
-
-procedure TTable.OnClickMenuItem (Sender: TObject);
-begin
-  if FStatus then
-    NewForm.Show
-  else
-    CreateForm(Sender);
-end;
-
-procedure TTable.CreateMenuItem (Caption: string);
-begin
-  NewMenuIten:= TMenuItem.Create(MainItem);
-  NewMenuIten.Caption:= Caption;
-  NewMenuIten.OnClick:= @OnClickMenuItem;
-  MainItem.Add(NewMenuIten);
+  FiltStatus:= false;
 end;
 
 function TTable.SQLGen ():TStringList;
 var
-  i, k, g: integer;
+  i, g: integer;
   a, b, res: TStringList;
   head: string;
-  s1, s2, s3: String;
-  output: text;
+  s1: String;
 begin
-  k:= 1;
   g:= 0;
   a:= TStringList.Create;
   b:= TStringList.Create;
   res:= TStringList.Create;
   head:= 'SELECT ';
-  a.Append('FROM ' + TBName);
+  a.Append('FROM ' + FName);
   for i:=0 to high(TableColumns) do
   begin
     if TableColumns[i].RefS then
@@ -305,8 +475,8 @@ begin
       inc(g);
       s1:= 'INNER JOIN ' + TableColumns[i].RefTable + 'S ON ' +
         TableColumns[i].RefTable + 'S.' + TableColumns[i].RefField +
-        ' = ' + TBName + '.' + TableColumns[i].Name;
-      b.add(s1);
+        ' = ' + FName + '.' + TableColumns[i].Name;
+      b.Append(s1);
       a.Append(b.text);
       b.clear;
     end
