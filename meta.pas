@@ -24,7 +24,10 @@ type
     FWidth: integer;
     RefTable: string;
     RefField: string;
-    FType: TTypeField;
+    RefNameField: string;
+    RefCaption: string;
+    RefType: TTypeField;
+    FieldType: TTypeField;
     isReference: boolean;
     isOrder: TTypeOrder;
   published
@@ -32,8 +35,10 @@ type
     property Caption: string read FCaption write FCaption;
     property Width: integer read FWidth write FWidth;
     property RefS: boolean read isReference write isReference;
-    property TypeField: TTypeField read FType write FType;
+    property TypeField: TTypeField read FieldType write FieldType;
     property OrderStatus: TTypeOrder read isOrder write isOrder;
+    property RType: TTypeField read RefType write RefType;
+    property FType: TTypeField read FieldType write FieldType;
   end;
 
   { TTable }
@@ -54,7 +59,7 @@ type
     function GetForm(): TForm;
     procedure FormClose();
     procedure CreateCaptionColumn(TableName: string);
-    procedure GetCaptionColumn();
+    procedure ChangeCaptionColumn();
     procedure CreateRef();
     function GetColForNum (n: integer): TField;
     function GetCol(CName: string): TField;
@@ -99,7 +104,7 @@ begin
     FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName;
   end;
   FForm.FSQLQuery.Active:= true;
-  GetCaptionColumn();
+  ChangeCaptionColumn();
   FStatus:= true;
   FForm.Show;
 end;
@@ -132,7 +137,7 @@ begin
     end
   end;
   FForm.FSQLQuery.Active:= true;
-  GetCaptionColumn();
+  ChangeCaptionColumn();
 end;
 
 function TTable.CreateSortQuery (): string;
@@ -186,14 +191,13 @@ begin
     (length(Filters) <> 1) then
     for i:=(Sender as TSpeedButton).Tag + 1 to high(Filters) do
     begin
-      Filters[i - 1]:= nil;
       Filters[i - 1]:= Filters[i];
       Filters[i]:= nil;
       Filters[i - 1].ChangePos(i - 1);
       if Filters[i - 1].isApply then
       begin
         Filters[i - 1].Parametr.Name:= 'param' + IntToStr(i - 1);
-        CreateQueryParams(@Filters[i - 1]);
+          CreateQueryParams(@Filters[i - 1]);
       end;
     end
   else
@@ -207,7 +211,7 @@ begin
       FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName;
     end;
     FForm.FSQLQuery.Active:= true;
-    GetCaptionColumn();
+    ChangeCaptionColumn();
     Self.isFiltred:= false;
   end;
   SetLength(Filters, length(Filters) - 1);
@@ -229,13 +233,11 @@ begin
   temp^.Parametr.Num:= k;
   if (Self).RefStatus then
   begin
-    temp^.Parametr.NameField:=  FName + '.' +
-      TableColumns[k].RefTable + '_' + TableColumns[k].RefField;
+    temp^.Parametr.NameField:=
+      TableColumns[k].RefTable  + 'S.' + TableColumns[k].RefNameField;
   end
   else
-  begin
     temp^.Parametr.NameField:= FName + '.' + TableColumns[k].Name;
-  end;
   CreateQueryParams(temp);
   AddQueryFilter;
 end;
@@ -256,50 +258,49 @@ end;
 procedure TTable.AddQueryFilter ();
 var
   i, c: integer;
-  isNotFirst: boolean = false;
+  isWasFirst: boolean = false;
 begin
   FForm.FSQLQuery.Active:= false;
+  FForm.FSQLQuery.SQL.Text:= '';
   for i:=0 to high(Filters) do
   begin
     if Filters[i].isApply then
     begin
+      ShowMessage(IntToStr(i));
       inc(c);
-      if not isNotFirst then
+      if not isWasFirst then
       begin
         if Self.isReferences then
-        begin
           FForm.FSQLQuery.SQL.Text:= SQLGen.Text + ' ' +
-          ' where ' +  Filters[i].Parametr.Query;
-        end
+            ' where ' +  Filters[i].Parametr.Query
         else
-        begin
           FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName +
-          ' where ' +  Filters[i].Parametr.Query;
-        end;
+            ' where ' +  Filters[i].Parametr.Query;
       end
       else
         FForm.FSQLQuery.SQL.Text:= FForm.FSQLQuery.SQL.Text +
           ' and ' + Filters[i].Parametr.Query;
       if Filters[i].Parametr.Like then
-      begin
-        FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
-          Filters[i].Parametr.Value + '%';
-      end
+        FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:= '%' +
+          Filters[i].Parametr.Value + '%'
       else
       begin
-        if Self.TableColumns[Filters[i].Parametr.Num].TypeField = TInt then
-          FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
-            Filters[i].Parametr.Value
-        else
-          FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:= '''' +
-            Filters[i].Parametr.Value + '''';
+        FForm.FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
+          Filters[i].Parametr.Value;
       end;
-      isNotFirst:= true;
+      isWasFirst:= true;
     end;
+  end;
+  if FForm.FSQLQuery.SQL.Text = '' then
+  begin
+    if isReferences then
+      FForm.FSQLQuery.SQL.Text:= SQLGen.Text
+    else
+      FForm.FSQLQuery.SQL.Text:= 'SELECT * FROM ' + FName;
   end;
   FForm.FSQLQuery.SQL.Append(CreateSortQuery);
   FForm.FSQLQuery.Active:= true;
-  GetCaptionColumn();
+  ChangeCaptionColumn();
   FiltStatus:= true;
 end;
 
@@ -315,7 +316,10 @@ begin
   TempList:= TStringList.Create;
   for i:=0 to FForm.FDBGrid.Columns.Count - 1 do
   begin
-    TempList.Append(TableColumns[i].Caption)
+    if TableColumns[i].isReference then
+      TempList.Append(TableColumns[i].RefCaption)
+    else
+      TempList.Append(TableColumns[i].Caption)
   end;
   Filters[high(Filters)].FillCB(TempList);
   TempList.Destroy;
@@ -324,11 +328,12 @@ end;
 procedure TTable.CreateRef();
 var
   i, k: integer;
-  s: string;
+  s, t: string;
 begin
   for i:=0 to high(TableColumns) do
   begin
     s:= '';
+    t:= '';
     k:= 1;
     if CheckRef(TableColumns[i]) then
     begin
@@ -348,6 +353,22 @@ begin
         k+= 1;
       end;
       TableColumns[i].RefField:= s;
+      TableColumns[i].RType:=
+        FindTableofName(TableColumns[i].RefTable + 'S').GetColForNum(1).FType;
+      TableColumns[i].RefNameField:=
+        FindTableofName(TableColumns[i].RefTable + 'S').GetColForNum(1).Name;
+      k:= 1;
+      while TableColumns[i].Caption[k] <> '_' do
+      begin
+        t += TableColumns[i].Caption[k];
+        inc(k);
+      end;
+      if t = 'Преподаватель' then
+        TableColumns[i].RefCaption:= t + '_Имя'
+      else if t = 'Пара' then
+        TableColumns[i].RefCaption:= t + '_Номер'
+      else
+        TableColumns[i].RefCaption:= t + '_Название'
     end;
   end;
 end;
@@ -421,19 +442,23 @@ begin
   TempSQLTransaction.Free;
 end;
 
-procedure TTable.GetCaptionColumn();
+procedure TTable.ChangeCaptionColumn();
 var
   i: integer;
 begin
   for i:=0 to FForm.FDBGrid.Columns.Count-1 do
   begin
+    if TableColumns[i].isReference then
+      FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+        TableColumns[i].RefCaption
+    else
+      FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+        TableColumns[i].Caption;
     case TableColumns[i].isOrder of
-    None: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
-      TableColumns[i].Caption;
-    Down: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
-      TableColumns[i].Caption + ' ↓ ';
-    Up: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
-      TableColumns[i].Caption + ' ↑ ';
+      Down: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+        FForm.FDBGrid.Columns.Items[i].Title.Caption + ' ↓ ';
+      Up: FForm.FDBGrid.Columns.Items[i].Title.Caption:=
+        FForm.FDBGrid.Columns.Items[i].Title.Caption + ' ↑ ';
     end;
     FForm.FDBGrid.Columns.Items[i].Width:= TableColumns[i].Width;
   end;

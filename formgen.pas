@@ -52,6 +52,7 @@ type
     procedure DelClick (Sender: TObject);
     procedure FillCB (AList: TStringList);
     procedure OnChangeParam (Sender: TObject);
+    procedure EditKeyPress(Sender: TObject; var Key: char);
     Destructor Destroy ();
   published
     property isApply: boolean read AppStatus write AppStatus;
@@ -127,6 +128,7 @@ begin
   FActionCB:= TComboBox.Create(nil);
   with FActionCB do
   begin
+    Name:= 'Action';
     Parent:= APanel;
     Top:= 28 + 24*count;
     Left:= 134;
@@ -147,6 +149,7 @@ begin
     Height:= 24;
     Visible:= true;
     OnChange:= @OnChangeParam;
+    OnKeyPress:= @EditKeyPress;
   end;
   ApplyBTN:= TSpeedButton.Create(nil);
   with ApplyBtn do
@@ -179,6 +182,9 @@ procedure TFilter.OnChangeParam (Sender: TObject);
 begin
   isApply:= false;
   ApplyBtn.Enabled:= true;
+  if (not Sender.ClassNameIs('TEdit')) and
+    not((Sender as TComboBox).name = 'Action') then
+    ValueEdit.Clear;
 end;
 
 procedure TFilter.FillCB(AList: TStringList);
@@ -193,6 +199,25 @@ begin
   FActionCB.ItemIndex:= 0;
 end;
 
+procedure TFilter.EditKeyPress(Sender: TObject; var Key: char);
+var
+  Temp: TField;
+begin
+  Temp:= TableArr[ApplyBtn.Parent.Parent.Tag].GetColForNum(FNameCB.ItemIndex);
+  if Temp.RefS then
+  begin
+    if Temp.RType = TInt then
+      if not (key in ['0'..'9', #8]) then
+        key:= #0;
+  end
+  else
+  begin
+    if Temp.FType = TInt then
+      if not (key in ['0'..'9', #8]) then
+        key:= #0;
+  end;
+end;
+
 procedure TFilter.AppClick (Sender: TObject);
 begin
   if (FNameCB.Text = '') or (FActionCB.Text = '') or (ValueEdit.Text = '') then
@@ -201,11 +226,7 @@ begin
     exit;
   end;
   ApplyBtn.Enabled:= false;
-  try
-    TableArr[ApplyBtn.Parent.Parent.Tag].ApplyFilter(Sender);
-  except
-    ShowMessage('Введены некорректные данные! Пожалуйста, повторите ввод');
-  end;
+  TableArr[ApplyBtn.Parent.Parent.Tag].ApplyFilter(Sender);
 end;
 
 procedure TFilter.DelClick (Sender: TObject);
