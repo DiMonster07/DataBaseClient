@@ -7,7 +7,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main, meta, DBConnection, FormGen;
+  Forms, main, meta, DBConnection, FormGen, FormChangeData;
 
 {$R *.res}
 
@@ -16,6 +16,7 @@ begin
   Application.Initialize;
   Application.CreateForm(TDataModule1, DataModule1);
   Application.CreateForm(TProgramForm, ProgramForm);
+  Application.CreateForm(TFormChangeData1, FormChangeData1);
   Application.Run;
 end.
 

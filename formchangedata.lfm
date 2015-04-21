@@ -1,13 +1,12 @@
-object FormTable: TFormTable
-  Left = 825
-  Height = 550
-  Top = 300
-  Width = 1000
-  Caption = 'FormTable'
-  ClientHeight = 550
-  ClientWidth = 1000
-  Constraints.MinHeight = 550
-  Constraints.MinWidth = 1000
+object FormChangeData1: TFormChangeData1
+  Left = 807
+  Height = 63
+  Top = 113
+  Width = 716
+  BorderStyle = bsSingle
+  Caption = 'FormChangeData1'
+  ClientHeight = 63
+  ClientWidth = 716
   Icon.Data = {
     BE1000000000010001002020000001002000A810000016000000280000002000
     0000400000000100200000000000001000006400000064000000000000000000
@@ -145,94 +144,15 @@ object FormTable: TFormTable
     0000000000000000000000000000000000000000000000000000000000000000
     0000
   }
-  OnClose = FormClose
   OnCreate = FormCreate
   LCLVersion = '1.2.4.0'
-  object FDBGrid: TDBGrid
-    Left = 32
-    Height = 548
-    Top = 0
-    Width = 532
-    Anchors = [akTop, akLeft, akRight, akBottom]
-    Color = clWindow
-    Columns = <>
-    DataSource = FDataSource
-    ReadOnly = True
+  object ComboBox1: TComboBox
+    Left = 16
+    Height = 23
+    Top = 32
+    Width = 136
+    ItemHeight = 15
     TabOrder = 0
-    OnDblClick = FDBGridDblClick
-  end
-  object FDBNavigator: TDBNavigator
-    Left = 0
-    Height = 328
-    Top = 0
-    Width = 32
-    BevelOuter = bvNone
-    ChildSizing.EnlargeHorizontal = crsScaleChilds
-    ChildSizing.EnlargeVertical = crsScaleChilds
-    ChildSizing.ShrinkHorizontal = crsScaleChilds
-    ChildSizing.ShrinkVertical = crsScaleChilds
-    ChildSizing.Layout = cclTopToBottomThenLeftToRight
-    ChildSizing.ControlsPerLine = 100
-    ClientHeight = 328
-    ClientWidth = 32
-    DataSource = FDataSource
-    Direction = nbdVertical
-    Options = []
-    TabOrder = 1
-  end
-  object FilterPanel: TPanel
-    Left = 569
-    Height = 548
-    Top = 0
-    Width = 425
-    Anchors = [akTop, akRight, akBottom]
-    BorderWidth = 1
-    ClientHeight = 548
-    ClientWidth = 425
-    TabOrder = 2
-    object Label1: TLabel
-      Left = 176
-      Height = 18
-      Top = 3
-      Width = 60
-      Alignment = taCenter
-      Caption = 'Фильтры'
-      Font.CharSet = ANSI_CHARSET
-      Font.Height = -15
-      Font.Name = 'Tahoma'
-      Font.Pitch = fpVariable
-      Font.Quality = fqDraft
-      ParentColor = False
-      ParentFont = False
-    end
-    object AddBtn: TBitBtn
-      Left = 369
-      Height = 32
-      Top = 512
-      Width = 48
-      Anchors = [akRight, akBottom]
-      Kind = bkHelp
-      OnClick = AddBtnClick
-      TabOrder = 0
-    end
-  end
-  object FSQLQuery: TSQLQuery
-    FieldDefs = <>
-    Database = DataModule1.IBConnection1
-    Transaction = DataModule1.SQLTransaction1
-    Params = <>
-    left = 56
-    top = 56
-  end
-  object FSQLTransaction: TSQLTransaction
-    Active = False
-    Database = DataModule1.IBConnection1
-    left = 208
-    top = 104
-  end
-  object FDataSource: TDataSource
-    DataSet = FSQLQuery
-    left = 120
-    top = 64
+    Text = 'ComboBox1'
   end
 end

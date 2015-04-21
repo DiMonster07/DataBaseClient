@@ -33,12 +33,12 @@ type
     property Name: string read FPName write FPName;
   end;
 
-
   { TFilter}
 
   TFilter = class
-    FNameCB: TComboBox;
-    FActionCB: TComboBox;
+    Panel: TPanel;
+    NameBox: TComboBox;
+    ActionBox: TComboBox;
     ValueEdit: TEdit;
     ApplyBtn: TSpeedButton;
     DelBtn: TSpeedButton;
@@ -49,11 +49,12 @@ type
     procedure CreateFilter(APanel: TPanel; Count: integer);
     procedure ChangePos (num: integer);
     procedure AppClick (Sender: TObject);
-    procedure DelClick (Sender: TObject);
+    procedure DelClick (Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure FillCB (AList: TStringList);
     procedure OnChangeParam (Sender: TObject);
     procedure EditKeyPress(Sender: TObject; var Key: char);
-    Destructor Destroy ();
+    destructor DestroyFilter ();
   published
     property isApply: boolean read AppStatus write AppStatus;
   end;
@@ -70,6 +71,7 @@ type
     FSQLQuery: TSQLQuery;
     FSQLTransaction: TSQLTransaction;
     procedure AddBtnClick(Sender: TObject);
+    procedure FDBGridDblClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure TitleClick(AColumn: TColumn);
@@ -100,9 +102,104 @@ begin
   FDBGrid.OnTitleClick:= @TitleClick;
 end;
 
+procedure TFilter.CreateFilter(APanel: TPanel; Count: integer);
+begin
+  Panel:= TPanel.Create (APanel);
+  with Panel do
+  begin
+    Parent:= APanel;
+    Width:= 410;
+    Height:= 34;
+    Top:= 23 * (count + 1) + (height - 20) * count;
+    Left:= 8;
+  end;
+  NameBox:= TComboBox.Create(Panel);
+  with NameBox do
+  begin
+    Parent:= Panel;
+    Top:= 6;
+    Left:= 3;
+    Width:= 136;
+    Height:= 23;
+    ReadOnly:= true;
+    Visible:= true;
+    ItemIndex:= 0;
+    OnChange:= @OnChangeParam;
+  end;
+  ActionBox:= TComboBox.Create(Panel);
+  with ActionBox do
+  begin
+    Parent:= Panel;
+    Top:= 6;
+    Left:= 140;
+    Width:= 88;
+    Height:= 23;
+    ReadOnly:= true;
+    Visible:= true;
+    ItemIndex:= 0;
+    OnChange:= @OnChangeParam;
+  end;
+  ValueEdit:= TEdit.Create(Panel);
+  with ValueEdit do
+  begin
+    Parent:= Panel;
+    Top:= 6;
+    Left:= 232;
+    Width:= 120;
+    Height:= 23;
+    Visible:= true;
+    OnChange:= @OnChangeParam;
+    OnKeyPress:= @EditKeyPress;
+  end;
+  ApplyBtn:= TSpeedButton.Create(Panel);
+  with ApplyBtn do
+  begin
+    Parent:= Panel;
+    Height:= 26;
+    Width:= 24;
+    Glyph.LoadFromFile('apply_icon.bmp');
+    Left:= 355;
+    Top:= 5;
+    Tag:= count;
+    OnClick:= @AppClick;
+  end;
+  DelBTN:= TSpeedButton.Create(nil);
+  with DelBtn do
+  begin
+    Parent:= Panel;
+    Height:= 26;
+    Width:= 24;
+    Glyph.LoadFromFile('del_icon.bmp');
+    Left:= 380;
+    Top:= 5;
+    Tag:= count;
+    OnMouseUp:= @DelClick;
+  end;
+  Self.isApply:= false;
+end;
+
+destructor TFilter.DestroyFilter();
+begin
+  NameBox.Free;
+  ActionBox.Free;
+  ValueEdit.Free;
+  ApplyBtn.Free;
+  Panel.Free;
+end;
+
 procedure TFormTable.AddBtnClick(Sender: TObject);
 begin
   TableArr[Self.Tag].AddFilter ();
+end;
+
+procedure TFormTable.FDBGridDblClick(Sender: TObject);
+begin
+  ShowMessage(FDBGrid.SelectedColumn.FieldName);
+end;
+
+procedure TFilter.DelClick (Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  TableArr[DelBtn.Parent.Parent.Parent.Tag].DelFilter(Sender);
 end;
 
 procedure TFormTable.TitleClick(AColumn: TColumn);
@@ -110,80 +207,11 @@ begin
   TableArr[Self.Tag].OnColumnClick (AColumn.Index);
 end;
 
-procedure TFilter.CreateFilter(APanel: TPanel; Count: integer);
-begin
-  FNameCB:= TComboBox.Create(nil);
-  with FNameCB do
-  begin
-    Parent:= APanel;
-    Top:= 28 + 24*count;
-    Left:= 5;
-    Width:= 128;
-    Height:= 24;
-    ReadOnly:= true;
-    Visible:= true;
-    OnChange:= @OnChangeParam;
-    ItemIndex:= 0;
-  end;
-  FActionCB:= TComboBox.Create(nil);
-  with FActionCB do
-  begin
-    Name:= 'Action';
-    Parent:= APanel;
-    Top:= 28 + 24*count;
-    Left:= 134;
-    Width:= 52;
-    Height:= 24;
-    ReadOnly:= true;
-    Visible:= true;
-    ItemIndex:= 0;
-    OnChange:= @OnChangeParam;
-  end;
-  ValueEdit:= TEdit.Create(nil);
-  with ValueEdit do
-  begin
-    Parent:= APanel;
-    Top:= 28 + 24*count;
-    Left:= 190;
-    Width:= 72;
-    Height:= 24;
-    Visible:= true;
-    OnChange:= @OnChangeParam;
-    OnKeyPress:= @EditKeyPress;
-  end;
-  ApplyBTN:= TSpeedButton.Create(nil);
-  with ApplyBtn do
-  begin
-    Parent:= APanel;
-    Height:= 26;
-    Width:= 24;
-    Glyph.LoadFromFile('apply_icon.bmp');
-    Left:= 264;
-    Top:= 28 + 24*count;
-    Tag:= count;
-    OnClick:= @AppClick;
-  end;
-  DelBTN:= TSpeedButton.Create(nil);
-  with DelBtn do
-  begin
-    Parent:= APanel;
-    Height:= 26;
-    Width:= 24;
-    Glyph.LoadFromFile('del_icon.bmp');
-    Left:= 292;
-    Top:= 28 + 24*count;
-    Tag:= count;
-    OnClick:= @DelClick;
-  end;
-  Self.isApply:= false;
-end;
-
 procedure TFilter.OnChangeParam (Sender: TObject);
 begin
   isApply:= false;
   ApplyBtn.Enabled:= true;
-  if (not Sender.ClassNameIs('TEdit')) and
-    not((Sender as TComboBox).name = 'Action') then
+  if Sender = NameBox then
     ValueEdit.Clear;
 end;
 
@@ -192,18 +220,19 @@ var
   i: integer;
 begin
   for i:=0 to AList.Count - 1 do
-    FNameCB.Items.Add(AList.ValueFromIndex[i]);
+    NameBox.Items.Add(AList.ValueFromIndex[i]);
   for i:=0 to 6 do
-    FActionCB.Items.Add(ActionArr[i]);
-  FNameCB.ItemIndex:= 0;
-  FActionCB.ItemIndex:= 0;
+    ActionBox.Items.Add(ActionArr[i]);
+  NameBox.ItemIndex:= 0;
+  ActionBox.ItemIndex:= 0;
 end;
 
 procedure TFilter.EditKeyPress(Sender: TObject; var Key: char);
 var
   Temp: TField;
 begin
-  Temp:= TableArr[ApplyBtn.Parent.Parent.Tag].GetColForNum(FNameCB.ItemIndex);
+  Temp:= TableArr[ApplyBtn.Parent.Parent.Parent.Tag].
+    GetColForNum(NameBox.ItemIndex);
   if Temp.RefS then
   begin
     if Temp.RType = TInt then
@@ -220,42 +249,21 @@ end;
 
 procedure TFilter.AppClick (Sender: TObject);
 begin
-  if (FNameCB.Text = '') or (FActionCB.Text = '') or (ValueEdit.Text = '') then
+  if (NameBox.Text = '') or (ActionBox.Text = '') or (ValueEdit.Text = '') then
   begin
     ShowMessage('Заполните все поля');
     exit;
   end;
   ApplyBtn.Enabled:= false;
-  TableArr[ApplyBtn.Parent.Parent.Tag].ApplyFilter(Sender);
-end;
-
-procedure TFilter.DelClick (Sender: TObject);
-begin
-  TableArr[DelBtn.Parent.Parent.Tag].DelFilter(Sender);
-end;
-
-destructor TFilter.Destroy();
-begin
-  FNameCB:= nil;
-  FActionCB:= nil;
-  ValueEdit:= nil;
-  ApplyBTN:= nil;
-  DelBTN:= nil;
-  Parametr:= nil;
+  TableArr[ApplyBtn.Parent.Parent.Parent.Tag].ApplyFilter(Sender);
 end;
 
 procedure TFilter.ChangePos (num: integer);
 begin
-  FNameCB.Top:= 28 + 24*num;
-  FActionCB.Top:= 28 + 24*num;
-  ValueEdit.Top:= 28 + 24*num;
-  ApplyBTN.Top:= 28 + 24*num;
-  DelBTN.Top:= 28 + 24*num;
+  Panel.Top:= 23 * (num + 1) + (Panel.Height - 20) * num;
   ApplyBTN.Tag:= num;
   DelBTN.Tag:= num;
 end;
-
-
 
 end.
 

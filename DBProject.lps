@@ -4,15 +4,15 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="30">
+    <Units Count="36">
       <Unit0>
         <Filename Value="DBProject.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="DBProject"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="39" Y="15"/>
-        <UsageCount Value="186"/>
+        <CursorPos X="43" Y="10"/>
+        <UsageCount Value="200"/>
       </Unit0>
       <Unit1>
         <Filename Value="main.pas"/>
@@ -24,8 +24,8 @@
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="28" Y="89"/>
-        <UsageCount Value="186"/>
+        <CursorPos X="9" Y="77"/>
+        <UsageCount Value="200"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -35,9 +35,9 @@
         <UnitName Value="meta"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="10"/>
-        <CursorPos X="42" Y="89"/>
-        <UsageCount Value="183"/>
+        <TopLine Value="24"/>
+        <CursorPos X="34" Y="51"/>
+        <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit2>
       <Unit3>
@@ -47,7 +47,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="14"/>
-        <UsageCount Value="182"/>
+        <UsageCount Value="200"/>
       </Unit3>
       <Unit4>
         <Filename Value="dbconnection.pas"/>
@@ -56,43 +56,43 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="DataModule"/>
         <UnitName Value="DBConnection"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="24" Y="27"/>
-        <UsageCount Value="127"/>
+        <CursorPos X="1" Y="42"/>
+        <UsageCount Value="146"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="formgen.pas"/>
+        <Filename Value="FormGen.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormTable"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="FormGen"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="184"/>
-        <CursorPos X="5" Y="218"/>
-        <UsageCount Value="87"/>
+        <TopLine Value="170"/>
+        <CursorPos X="47" Y="197"/>
+        <UsageCount Value="106"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="D:\lazarus\lcl\include\control.inc"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2686"/>
-        <CursorPos X="1" Y="2715"/>
-        <UsageCount Value="9"/>
+        <TopLine Value="4166"/>
+        <CursorPos X="1" Y="4193"/>
+        <UsageCount Value="10"/>
       </Unit6>
       <Unit7>
         <Filename Value="D:\lazarus\lcl\include\customform.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2156"/>
         <CursorPos X="1" Y="2183"/>
-        <UsageCount Value="2"/>
+        <UsageCount Value="1"/>
       </Unit7>
       <Unit8>
         <Filename Value="D:\lazarus\lcl\dbgrids.pas"/>
@@ -100,7 +100,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="3505"/>
         <CursorPos X="1" Y="3532"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit8>
       <Unit9>
         <Filename Value="D:\lazarus\components\lazutils\lazutf8.pas"/>
@@ -108,14 +108,14 @@
         <WindowIndex Value="0"/>
         <TopLine Value="3126"/>
         <CursorPos X="1" Y="3153"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="9"/>
       </Unit9>
       <Unit10>
         <Filename Value="D:\lazarus\lcl\include\menuitem.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="260"/>
         <CursorPos X="1" Y="271"/>
-        <UsageCount Value="0"/>
+        <UsageCount Value="9"/>
       </Unit10>
       <Unit11>
         <Filename Value="D:\lazarus\lcl\lclclasses.pp"/>
@@ -123,14 +123,14 @@
         <WindowIndex Value="0"/>
         <TopLine Value="109"/>
         <CursorPos X="1" Y="140"/>
-        <UsageCount Value="2"/>
+        <UsageCount Value="1"/>
       </Unit11>
       <Unit12>
         <Filename Value="D:\lazarus\lcl\interfaces\win32\win32callback.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="189"/>
         <CursorPos X="1" Y="216"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="5"/>
       </Unit12>
       <Unit13>
         <Filename Value="D:\lazarus\lcl\interfaces\win32\win32wsforms.pp"/>
@@ -138,28 +138,28 @@
         <WindowIndex Value="0"/>
         <TopLine Value="369"/>
         <CursorPos X="1" Y="395"/>
-        <UsageCount Value="2"/>
+        <UsageCount Value="1"/>
       </Unit13>
       <Unit14>
         <Filename Value="D:\lazarus\lcl\include\buttoncontrol.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="16"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="10"/>
       </Unit14>
       <Unit15>
         <Filename Value="D:\lazarus\lcl\include\buttons.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="143"/>
         <CursorPos X="1" Y="170"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="10"/>
       </Unit15>
       <Unit16>
         <Filename Value="dbconnection.lfm"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="2"/>
+        <UsageCount Value="1"/>
         <DefaultSyntaxHighlighter Value="LFM"/>
       </Unit16>
       <Unit17>
@@ -167,7 +167,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="5562"/>
         <CursorPos X="1" Y="5589"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="9"/>
       </Unit17>
       <Unit18>
         <Filename Value="D:\lazarus\lcl\lclmessageglue.pas"/>
@@ -175,7 +175,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="93"/>
         <CursorPos X="1" Y="123"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="5"/>
       </Unit18>
       <Unit19>
         <Filename Value="D:\БРАУЗЕР\DBProject-master\DBProject-master\dbconnection.pas"/>
@@ -183,35 +183,35 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="18" Y="48"/>
-        <UsageCount Value="2"/>
+        <UsageCount Value="1"/>
       </Unit19>
       <Unit20>
         <Filename Value="D:\lazarus\lcl\include\fpimagebitmap.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="114"/>
         <CursorPos X="1" Y="141"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="5"/>
       </Unit20>
       <Unit21>
         <Filename Value="D:\lazarus\lcl\include\messagedialogs.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="178"/>
         <CursorPos X="1" Y="205"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit21>
       <Unit22>
         <Filename Value="D:\lazarus\lcl\include\lclintf.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="494"/>
         <CursorPos X="1" Y="502"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="6"/>
       </Unit22>
       <Unit23>
         <Filename Value="D:\lazarus\lcl\interfaces\win32\win32lclintf.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="676"/>
         <CursorPos X="1" Y="707"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="5"/>
       </Unit23>
       <Unit24>
         <Filename Value="D:\lazarus\lcl\themes.pas"/>
@@ -219,14 +219,14 @@
         <WindowIndex Value="0"/>
         <TopLine Value="537"/>
         <CursorPos X="1" Y="565"/>
-        <UsageCount Value="6"/>
+        <UsageCount Value="5"/>
       </Unit24>
       <Unit25>
         <Filename Value="D:\lazarus\lcl\include\bitbtn.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="38"/>
-        <CursorPos X="1" Y="65"/>
-        <UsageCount Value="7"/>
+        <CursorPos X="25" Y="38"/>
+        <UsageCount Value="10"/>
       </Unit25>
       <Unit26>
         <Filename Value="D:\lazarus\lcl\buttons.pp"/>
@@ -234,7 +234,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="163"/>
         <CursorPos X="3" Y="190"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="7"/>
       </Unit26>
       <Unit27>
         <Filename Value="D:\lazarus\lcl\grids.pas"/>
@@ -242,146 +242,197 @@
         <WindowIndex Value="0"/>
         <TopLine Value="4957"/>
         <CursorPos X="1" Y="4984"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="7"/>
       </Unit27>
       <Unit28>
         <Filename Value="D:\lazarus\lcl\include\speedbutton.inc"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="811"/>
-        <CursorPos X="1" Y="838"/>
-        <UsageCount Value="9"/>
+        <TopLine Value="858"/>
+        <CursorPos X="1" Y="884"/>
+        <UsageCount Value="10"/>
       </Unit28>
       <Unit29>
         <Filename Value="D:\lazarus\lcl\include\customcombobox.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="912"/>
         <CursorPos X="1" Y="939"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit29>
+      <Unit30>
+        <Filename Value="C:\lazarus\lcl\include\control.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="3229"/>
+        <CursorPos X="1" Y="3251"/>
+        <UsageCount Value="9"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\objpas\classes\classesh.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="675"/>
+        <CursorPos X="14" Y="695"/>
+        <UsageCount Value="9"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="D:\lazarus\lcl\include\custompanel.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="45"/>
+        <UsageCount Value="10"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="CreateForm.lfm"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="LFM"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="CreateForm.pas"/>
+        <UnitName Value="CreateForm"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="6" Y="1"/>
+        <UsageCount Value="10"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="formchangedata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormChangeData1"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="FormChangeData"/>
+        <EditorIndex Value="3"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="20" Y="1"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit35>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="200" Column="82" TopLine="174"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="331" Column="1" TopLine="298"/>
       </Position1>
       <Position2>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="207" Column="25" TopLine="176"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="333" Column="1" TopLine="298"/>
       </Position2>
       <Position3>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="151" Column="19" TopLine="138"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="336" Column="1" TopLine="298"/>
       </Position3>
       <Position4>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="55" Column="59" TopLine="39"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="333" Column="1" TopLine="298"/>
       </Position4>
       <Position5>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="104" Column="34" TopLine="104"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="336" Column="1" TopLine="298"/>
       </Position5>
       <Position6>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="55" Column="60" TopLine="30"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="340" Column="29" TopLine="300"/>
       </Position6>
       <Position7>
         <Filename Value="meta.pas"/>
-        <Caret Line="40" Column="55" TopLine="11"/>
+        <Caret Line="201" Column="35" TopLine="185"/>
       </Position7>
       <Position8>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="216" Column="13" TopLine="189"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="341" Column="5" TopLine="227"/>
       </Position8>
       <Position9>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="184" Column="34" TopLine="157"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="210" Column="5" TopLine="185"/>
       </Position9>
       <Position10>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="226" Column="30" TopLine="181"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="205" Column="1" TopLine="185"/>
       </Position10>
       <Position11>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="219" Column="5" TopLine="199"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="207" Column="1" TopLine="185"/>
       </Position11>
       <Position12>
         <Filename Value="meta.pas"/>
-        <Caret Line="369" Column="42" TopLine="343"/>
+        <Caret Line="208" Column="1" TopLine="185"/>
       </Position12>
       <Position13>
         <Filename Value="meta.pas"/>
-        <Caret Line="349" Column="9" TopLine="316"/>
+        <Caret Line="209" Column="1" TopLine="185"/>
       </Position13>
       <Position14>
         <Filename Value="meta.pas"/>
-        <Caret Line="351" Column="66" TopLine="316"/>
+        <Caret Line="209" Column="1" TopLine="185"/>
       </Position14>
       <Position15>
         <Filename Value="meta.pas"/>
-        <Caret Line="433" Column="9" TopLine="407"/>
+        <Caret Line="218" Column="4" TopLine="188"/>
       </Position15>
       <Position16>
-        <Filename Value="meta.pas"/>
-        <Caret Line="434" Column="23" TopLine="409"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="27" Column="44" TopLine="4"/>
       </Position16>
       <Position17>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="207" Column="60" TopLine="199"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="26" Column="44" TopLine="4"/>
       </Position17>
       <Position18>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="210" Column="27" TopLine="180"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="33" Column="49" TopLine="4"/>
       </Position18>
       <Position19>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="223" Column="19" TopLine="183"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="315" Column="20" TopLine="281"/>
       </Position19>
       <Position20>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="210" Column="1" TopLine="183"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="304" Column="43" TopLine="260"/>
       </Position20>
       <Position21>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="212" Column="1" TopLine="183"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="302" Column="7" TopLine="276"/>
       </Position21>
       <Position22>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="213" Column="1" TopLine="183"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="301" Column="8" TopLine="262"/>
       </Position22>
       <Position23>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="234" Column="1" TopLine="188"/>
+        <Filename Value="meta.pas"/>
+        <Caret Line="9" Column="79" TopLine="1"/>
       </Position23>
       <Position24>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="210" Column="1" TopLine="188"/>
+        <Filename Value="formchangedata.pas"/>
+        <Caret Line="1" Column="6" TopLine="1"/>
       </Position24>
       <Position25>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="217" Column="1" TopLine="188"/>
+        <Filename Value="FormGen.pas"/>
+        <Caret Line="3" Column="11" TopLine="34"/>
       </Position25>
       <Position26>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="234" Column="1" TopLine="188"/>
+        <Filename Value="formchangedata.pas"/>
+        <Caret Line="19" Column="32" TopLine="1"/>
       </Position26>
       <Position27>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="221" Column="25" TopLine="188"/>
+        <Filename Value="formchangedata.pas"/>
+        <Caret Line="24" Column="18" TopLine="1"/>
       </Position27>
       <Position28>
-        <Filename Value="formgen.pas"/>
-        <Caret Line="217" Column="22" TopLine="194"/>
+        <Filename Value="formchangedata.pas"/>
+        <Caret Line="34" Column="3" TopLine="1"/>
       </Position28>
       <Position29>
         <Filename Value="meta.pas"/>
-        <Caret Line="269" Column="20" TopLine="249"/>
+        <Caret Line="51" Column="34" TopLine="1"/>
       </Position29>
       <Position30>
-        <Filename Value="meta.pas"/>
-        <Caret Line="265" Column="32" TopLine="238"/>
+        <Filename Value="FormGen.pas"/>
+        <Caret Line="197" Column="50" TopLine="180"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
