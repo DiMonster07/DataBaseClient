@@ -1,9 +1,9 @@
 object DataModule1: TDataModule1
   OnCreate = DataModuleCreate
   OldCreateOrder = False
-  Height = 150
-  HorizontalOffset = 1230
-  VerticalOffset = 803
+  Height = 115
+  HorizontalOffset = 1194
+  VerticalOffset = 857
   Width = 384
   object IBConnection1: TIBConnection
     Connected = False
@@ -12,7 +12,7 @@ object DataModule1: TDataModule1
     Transaction = SQLTransaction1
     CharSet = 'UTF8'
     LogEvents = []
-    left = 80
+    left = 40
     top = 32
   end
   object SQLTransaction1: TSQLTransaction

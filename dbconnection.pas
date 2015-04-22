@@ -20,6 +20,7 @@ type
   public
     procedure DBConnect ();
     procedure DBDisConnect ();
+    procedure MakeChangesDatabase(AQuery: TStringList);
   end;
 
 var
@@ -46,6 +47,14 @@ procedure TDataModule1.DBDisConnect ();
 begin
   SQLQuery.Active:= false;
   IBConnection1.Connected:= false;
+end;
+
+procedure TDataModule1.MakeChangesDatabase(AQuery: TStringList);
+begin
+  SQLQuery.Close;
+  SQLQuery.SQL.Text:= AQuery.Text;
+  SQLQuery.ExecSQL;
+  SQLTransaction1.Commit;
 end;
 
 end.

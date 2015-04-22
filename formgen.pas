@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, sqldb, db, FileUtil, Forms, Controls, Graphics, Dialogs,
-  DBGrids, DbCtrls, ExtCtrls, StdCtrls, Buttons;
+  DBGrids, DbCtrls, ExtCtrls, StdCtrls, Buttons, Grids, FormChangeData;
 
 type
 
@@ -70,10 +70,17 @@ type
     Label1: TLabel;
     FSQLQuery: TSQLQuery;
     FSQLTransaction: TSQLTransaction;
+    InsertBtn: TSpeedButton;
+    DeleteBtn: TSpeedButton;
+    EditBtn: TSpeedButton;
     procedure AddBtnClick(Sender: TObject);
+    procedure DeleteBtnClick(Sender: TObject);
+    procedure EditBtnClick(Sender: TObject);
     procedure FDBGridDblClick(Sender: TObject);
+    procedure FDBGridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
+    procedure InsertBtnClick(Sender: TObject);
     procedure TitleClick(AColumn: TColumn);
   private
     { private declarations }
@@ -88,7 +95,38 @@ var
     '<>', 'включает');
 implementation
 uses meta;
+var
+  KoY: integer;
+
 {$R *.lfm}
+
+{ ActionChange }
+
+procedure TFormTable.InsertBtnClick(Sender: TObject);
+begin
+  TableArr[Self.Tag].OpenFormEditingTable(StrToInt(
+    FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctInsert);
+end;
+
+procedure TFormTable.DeleteBtnClick(Sender: TObject);
+begin
+  TableArr[Self.Tag].OpenFormEditingTable(StrToInt(
+    FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctDelete);
+end;
+
+procedure TFormTable.EditBtnClick(Sender: TObject);
+begin
+  if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
+  TableArr[Self.Tag].OpenFormEditingTable(
+    StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctEdit);
+end;
+
+procedure TFormTable.FDBGridDblClick(Sender: TObject);
+begin
+  EditBtnClick(Sender)
+end;
+
+
 
 { TFormTable }
 
@@ -192,9 +230,9 @@ begin
   TableArr[Self.Tag].AddFilter ();
 end;
 
-procedure TFormTable.FDBGridDblClick(Sender: TObject);
+procedure TFormTable.FDBGridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
-  ShowMessage(FDBGrid.SelectedColumn.FieldName);
+  KoY:= Y;
 end;
 
 procedure TFilter.DelClick (Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);

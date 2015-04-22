@@ -5,7 +5,7 @@ unit meta;
 interface
 
 uses
-  Classes, SysUtils, IBConnection, sqldb, db, FileUtil, Forms, Controls,
+  Classes, SysUtils, IBConnection, sqldb, db, FileUtil, Forms, DBGrids, Controls,
   Graphics, Dialogs, ExtCtrls, Menus, DbCtrls, Grids, DBConnection, FormGen,
   FormChangeData, StdCtrls, Buttons;
 
@@ -18,6 +18,7 @@ type
   { TField }
 
   TField = class
+    ArrData: TStringList;
   private
     FCaption: string;
     FName: string;
@@ -72,7 +73,14 @@ type
     procedure AddQueryFilter ();
     procedure CreateQueryParams (APointer: TPointFilter);
     procedure OnColumnClick(ANum: integer);
+    procedure OpenFormEditingTable (IdField: integer; Index: integer;
+      AChangeType: TChangeType);
+    procedure FillArrDataFields();
+    procedure FormChangeClose();
     function CreateSortQuery (): string;
+    function GenQueryChanges(ATypeAction: TChangeType;
+      AListData: TStringList): TStringList;
+    procedure FormUpdateData();
   published
     property Name: string read FName write FName;
     property Caption: string  read FCaption write FCaption;
@@ -94,6 +102,134 @@ function FindTableofName (TableName: string):TTable;
 function CreateItemName (IName: string): string;
 function CheckRef (TableColumns: TField):boolean;
 implementation
+
+{Editing}
+
+procedure TTable.FormChangeClose();
+begin
+  FFormChange.Free;
+  isChanges:= false;
+end;
+
+procedure TTable.FormUpdateData();
+begin
+  FForm.FSQLQuery.Active:= false;
+  FForm.FSQLQuery.Active:= true;
+  isChanges:= false;
+  ChangeCaptionColumn();
+end;
+
+function TTable.GenQueryChanges(ATypeAction: TChangeType;
+  AListData: TStringList): TStringList;
+var
+  temp: TStringList;
+  s1, s2, s3: string;
+  i: integer;
+begin
+  temp:= TStringList.Create;
+  case ATypeAction of
+  ctEdit:
+  begin
+    s1:= 'UPDATE ' + FName + ' SET ';
+    for i:=0 to AListData.Count - 1 do
+    begin
+      s1:= s1 + TableColumns[i].Name + ' = ' + '''' + AListData[i] + '''';
+      if i <> AListData.Count - 1 then
+        s1+= ', ';
+    end;
+    temp.Append(s1);
+    temp.Append('WHERE ID = ' + '''' + AListData[0] + '''');
+  end;
+  ctInsert:
+  begin
+    s1:= 'INSERT INTO ' + FName;
+    for i:=0 to AListData.Count - 1 do
+    begin
+      s2:= s2 + TableColumns[i].Name;
+      if i <> AListData.Count - 1 then
+        s2+= ', ';
+      s3:= s3 + '''' + AListData[i] + '''';
+      if i <> AListData.Count - 1 then
+        s3+= ', ';
+    end;
+    s1+= ' (' + s2 + ')';
+    temp.Append(s1);
+    temp.Append('VALUES (' + s3 + ')');
+  end;
+  ctDelete: temp.Append('delete from ' + FName + ' where id = ' +
+    '''' + AListData[0] + '''');
+  end;
+  result:= temp;
+end;
+
+procedure TTable.OpenFormEditingTable (IdField: integer; Index: integer;
+  AChangeType: TChangeType);
+var
+  i, k: integer;
+  temp: TArrWidthParam;
+  s: string;
+begin
+  if isChanges then
+  begin
+    FFormChange.Show;
+    exit;
+  end;
+  isChanges:= true;
+  FFormChange:= TFormChangeData1.Create(Application);
+  for i:=1 to length(TableColumns) do
+    s:= s + String(FForm.FSQLQuery.Fields.FieldByNumber(i).Value) + '|';
+  FFormChange.Tag:= FForm.Tag;
+  FFormChange.Caption:= s;
+  FFormChange.FAction:= AChangeType;
+  FFormChange.BorderStyle:= bsSingle;
+  SetLength(FFormChange.ArrComboBox, length(TableColumns));
+  for i:=0 to high(FFormChange.ArrComboBox) do
+  begin
+    FFormChange.FormReWriteData(i, TableColumns[i].Width);
+    for k:= 0 to TableColumns[i].ArrData.Count - 1 do
+      FFormChange.ArrComboBox[i].Items.Add(TableColumns[i].ArrData[k]);
+    FFormChange.ArrComboBox[i].ItemIndex:=
+     TableColumns[i].ArrData.IndexOf(
+     String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value));
+  end;
+  FFormChange.CreateBtn;
+  FFormChange.Show;
+end;
+
+procedure TTable.FillArrDataFields();
+var
+  TempDBGrid: TDBGrid;
+  TempDSource: TDataSource;
+  TempSQLQuery: TSQLQuery;
+  TempSQLTransaction: TSQLTransaction;
+  i: integer;
+begin
+  TempDBGrid:= TDBGrid.Create(DataModule1);
+  TempDSource:= TDataSource.Create(DataModule1);
+  TempSQLQuery:= TSQLQuery.Create(DataModule1);
+  TempSQLTransaction:= TSQLTransaction.Create(DataModule1);
+  TempDSource.DataSet:= TempSQLQuery;
+  TempSQLQuery.DataBase:= DataModule1.IBConnection1;
+  TempSQLQuery.Transaction:= TempSQLTransaction;
+  TempSQLTransaction.DataBase:= DataModule1.IBConnection1;
+  TempDBGrid.DataSource:= TempDSource;
+  TempSQLQuery.Active:= false;
+  TempSQLQuery.SQL.Text:= 'select * from ' + FName;
+  TempSQLQuery.Open;
+  for i:=0 to  high(TableColumns) do
+    TableColumns[i].ArrData:= TStringList.Create;
+  while not TempSQLQuery.EOF do
+  begin
+    for i:=0 to TempDBGrid.Columns.Count - 1 do
+      TableColumns[i].ArrData.Append(TempSQLQuery.Fields[i].AsString);
+    TempSQLQuery.Next;
+  end;
+  TempSQLQuery.Close;
+  TempDBGrid.Free;
+  TempDSource.Free;
+  TempSQLQuery.Free;
+  TempSQLTransaction.Free;
+end;
 
 {Filters}
 
@@ -174,6 +310,9 @@ begin
   SetLength(Filters, 0);
   FForm:= TFormTable.Create(Application);
   FForm.Tag:= (Sender as TMenuItem).Tag;
+  FForm.EditBtn.Tag:= FForm.Tag;
+  FForm.InsertBtn.Tag:= FForm.Tag;
+  FForm.DeleteBtn.Tag:= FForm.Tag;
   FForm.Caption:= FCaption;
   if isReferences then
     FForm.FSQLQuery.SQL.Text:= SQLGen.Text
@@ -182,6 +321,8 @@ begin
   FForm.FSQLQuery.Active:= true;
   ChangeCaptionColumn();
   FStatus:= true;
+  //If isReferences then
+  //  FForm.InsertBtn.Enabled:= true;
   FForm.Show;
 end;
 

@@ -82,6 +82,7 @@
         <Filename Value="formchangedata.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormChangeData1"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="FormChangeData"/>
       </Unit6>
