@@ -71,7 +71,7 @@
         <UnitName Value="DBConnection"/>
       </Unit4>
       <Unit5>
-        <Filename Value="FormGen.pas"/>
+        <Filename Value="formgen.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormTable"/>
         <HasResources Value="True"/>

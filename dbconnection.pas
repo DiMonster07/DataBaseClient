@@ -54,7 +54,7 @@ begin
   SQLQuery.Close;
   SQLQuery.SQL.Text:= AQuery.Text;
   SQLQuery.ExecSQL;
-  SQLTransaction1.Commit;
+  //SQLTransaction1.Commit;
 end;
 
 end.

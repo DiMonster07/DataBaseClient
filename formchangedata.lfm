@@ -1,8 +1,8 @@
 object FormChangeData1: TFormChangeData1
-  Left = 785
+  Left = 850
   Height = 53
-  Top = 125
-  Width = 680
+  Top = 108
+  Width = 342
   BorderStyle = bsSingle
   Caption = 'FormChangeData1'
   Icon.Data = {

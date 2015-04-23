@@ -1,7 +1,7 @@
 object FormTable: TFormTable
-  Left = 810
+  Left = 701
   Height = 550
-  Top = 295
+  Top = 248
   Width = 1000
   Caption = 'FormTable'
   ClientHeight = 550

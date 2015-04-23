@@ -86,11 +86,7 @@ end;
      DataModule1.SQLQuery.Next;
    end;
    for i:=0 to high(TableArr) do
-   begin
      TableArr[i].CreateRef;
-     if not TableArr[i].RefStatus then
-       TableArr[i].FillArrDataFields();
-   end;
    DataModule1.SQLQuery.Close;
  end;
 procedure TProgramForm.OnClickMenuItem (Sender: TObject);

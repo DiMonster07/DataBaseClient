@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, sqldb, db, FileUtil, Forms, Controls, Graphics, Dialogs,
-  DBGrids, DbCtrls, ExtCtrls, StdCtrls, Buttons, Grids, FormChangeData;
+  DBGrids, DbCtrls, ExtCtrls, StdCtrls, Buttons, Grids, FormChangeData,
+  DBConnection;
 
 type
 
@@ -109,21 +110,39 @@ begin
 end;
 
 procedure TFormTable.DeleteBtnClick(Sender: TObject);
+var
+  temp: TStringList;
 begin
-  TableArr[Self.Tag].OpenFormEditingTable(StrToInt(
-    FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctDelete);
+  temp:= TStringList.Create;
+  if FSQLQuery.Fields.FieldByNumber(1).Value = Null then exit;
+  temp.Append('delete from ' + TableArr[Self.Tag].Name + ' where id = ' +
+    '''' + String(FSQLQuery.Fields.FieldByNumber(1).Value) + '''');
+  DataModule1.MakeChangesDatabase(temp);
+  TableArr[Self.Tag].FormUpdateData();
 end;
 
 procedure TFormTable.EditBtnClick(Sender: TObject);
 begin
   if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
+  if TableArr[Self.Tag].RefStatus then
+    TableArr[Self.Tag].OpenFormEditingTable(
+      StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value),
+      FSQLQuery.RecNo, ctEditBox)
+  else
   TableArr[Self.Tag].OpenFormEditingTable(
     StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctEdit);
 end;
 
 procedure TFormTable.FDBGridDblClick(Sender: TObject);
 begin
-  EditBtnClick(Sender)
+  if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
+  if TableArr[Self.Tag].RefStatus then
+    TableArr[Self.Tag].OpenFormEditingTable(
+      StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value),
+      FSQLQuery.RecNo, ctEditBox)
+  else
+  TableArr[Self.Tag].OpenFormEditingTable(
+    StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctEdit);
 end;
 
 

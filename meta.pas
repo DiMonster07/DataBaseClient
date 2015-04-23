@@ -14,11 +14,11 @@ type
   TPointFilter = ^TFilter;
   TTypeField = (TInt, TStr);
   TTypeOrder = (Up, Down, None);
+  TListDataFields = array of TStringList;
 
   { TField }
 
   TField = class
-    ArrData: TStringList;
   private
     FCaption: string;
     FName: string;
@@ -52,6 +52,7 @@ type
     FFormChange: TFormChangeData1;
     TableColumns: array of TField;
     Filters: array of TFilter;
+    TempArrData: TListDataFields;
     FormStatus: boolean;
     isReferences: boolean;
     isFiltred: boolean;
@@ -75,8 +76,8 @@ type
     procedure OnColumnClick(ANum: integer);
     procedure OpenFormEditingTable (IdField: integer; Index: integer;
       AChangeType: TChangeType);
-    procedure FillArrDataFields();
     procedure FormChangeClose();
+    function GetListDataFields(): TListDataFields;
     function CreateSortQuery (): string;
     function GenQueryChanges(ATypeAction: TChangeType;
       AListData: TStringList): TStringList;
@@ -101,9 +102,32 @@ procedure CreateTable (TableName: string);
 function FindTableofName (TableName: string):TTable;
 function CreateItemName (IName: string): string;
 function CheckRef (TableColumns: TField):boolean;
+function GenFreeId(): integer;
 implementation
 
 {Editing}
+
+{select max(id) from groups}
+
+function GenFreeId: integer;
+var
+  i, max, k: integer;
+begin
+  max:= 0;
+  for i:=0 to high(TableArr) do
+  begin
+    if not TableArr[i].RefStatus then
+    begin
+      DataModule1.SQLQuery.Close;
+      DataModule1.SQLQuery.SQL.Text:= 'select max(id) from ' + TableArr[i].Name;
+      DataModule1.SQLQuery.Open;
+      k:= DataModule1.SQLQuery.Fields[0].AsInteger;
+      if k > max then
+        max:= k;
+    end;
+  end;
+  result:= max + 1;
+end;
 
 procedure TTable.FormChangeClose();
 begin
@@ -112,11 +136,15 @@ begin
 end;
 
 procedure TTable.FormUpdateData();
+var
+  i: integer;
 begin
-  FForm.FSQLQuery.Active:= false;
-  FForm.FSQLQuery.Active:= true;
+  FForm.FSQLQuery.Close;
+  FForm.FSQLQuery.Open;
   isChanges:= false;
   ChangeCaptionColumn();
+  for i:=0 to high(TempArrData) do
+    TempArrData[i].Free;
 end;
 
 function TTable.GenQueryChanges(ATypeAction: TChangeType;
@@ -128,7 +156,7 @@ var
 begin
   temp:= TStringList.Create;
   case ATypeAction of
-  ctEdit:
+  ctEdit, ctEditBox:
   begin
     s1:= 'UPDATE ' + FName + ' SET ';
     for i:=0 to AListData.Count - 1 do
@@ -156,8 +184,6 @@ begin
     temp.Append(s1);
     temp.Append('VALUES (' + s3 + ')');
   end;
-  ctDelete: temp.Append('delete from ' + FName + ' where id = ' +
-    '''' + AListData[0] + '''');
   end;
   result:= temp;
 end;
@@ -166,7 +192,6 @@ procedure TTable.OpenFormEditingTable (IdField: integer; Index: integer;
   AChangeType: TChangeType);
 var
   i, k: integer;
-  temp: TArrWidthParam;
   s: string;
 begin
   if isChanges then
@@ -176,59 +201,72 @@ begin
   end;
   isChanges:= true;
   FFormChange:= TFormChangeData1.Create(Application);
-  for i:=1 to length(TableColumns) do
-    s:= s + String(FForm.FSQLQuery.Fields.FieldByNumber(i).Value) + '|';
   FFormChange.Tag:= FForm.Tag;
-  FFormChange.Caption:= s;
   FFormChange.FAction:= AChangeType;
   FFormChange.BorderStyle:= bsSingle;
-  SetLength(FFormChange.ArrComboBox, length(TableColumns));
-  for i:=0 to high(FFormChange.ArrComboBox) do
+  TempArrData:= GetListDataFields;
+  case AChangeType of
+  ctEditBox:
   begin
-    FFormChange.FormReWriteData(i, TableColumns[i].Width);
-    for k:= 0 to TableColumns[i].ArrData.Count - 1 do
-      FFormChange.ArrComboBox[i].Items.Add(TableColumns[i].ArrData[k]);
-    FFormChange.ArrComboBox[i].ItemIndex:=
-     TableColumns[i].ArrData.IndexOf(
-     String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value));
+    for i:=1 to length(TableColumns) do
+      s:= s + String(FForm.FSQLQuery.Fields.FieldByNumber(i).Value) + '|';
+    FFormChange.Caption:= s;
+    SetLength(FFormChange.ArrComboBox, length(TableColumns));
+    for i:=0 to high(FFormChange.ArrComboBox) do
+    begin
+      FFormChange.CreateFormReWriteData(i, TableColumns[i].Width);
+      for k:= 0 to TempArrData[i].Count - 1 do
+        FFormChange.ArrComboBox[i].Items.Add(TempArrData[i].ValueFromIndex[k]);
+      FFormChange.ArrComboBox[i].ItemIndex:=
+        TempArrData[i].IndexOf(
+        String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value));
+    end;
   end;
+  ctInsert:
+  begin
+    SetLength(FFormChange.ArrEdits, length(TableColumns));
+    for i:=0 to high(FFormChange.ArrEdits) do
+      FFormChange.CreateFormEditData(i, TableColumns[i].Width);
+    FFormChange.ArrEdits[0].Enabled:= false;
+    FFormChange.ArrEdits[0].Text:= IntToStr(GenFreeId);
+    FFormChange.Caption:= FFormChange.ArrEdits[0].Text;
+  end;
+  ctEdit:
+  begin
+    SetLength(FFormChange.ArrEdits, length(TableColumns));
+    for i:=0 to high(FFormChange.ArrEdits) do
+    begin
+      FFormChange.CreateFormEditData(i, TableColumns[i].Width);
+      FFormChange.ArrEdits[i].Text:=
+        String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value);
+    end;
+    FFormChange.ArrEdits[0].Enabled:= false;
+  end;
+end;
   FFormChange.CreateBtn;
   FFormChange.Show;
 end;
 
-procedure TTable.FillArrDataFields();
+function TTable.GetListDataFields(): TListDataFields;
 var
-  TempDBGrid: TDBGrid;
-  TempDSource: TDataSource;
-  TempSQLQuery: TSQLQuery;
-  TempSQLTransaction: TSQLTransaction;
+  TempArr: TListDataFields;
   i: integer;
 begin
-  TempDBGrid:= TDBGrid.Create(DataModule1);
-  TempDSource:= TDataSource.Create(DataModule1);
-  TempSQLQuery:= TSQLQuery.Create(DataModule1);
-  TempSQLTransaction:= TSQLTransaction.Create(DataModule1);
-  TempDSource.DataSet:= TempSQLQuery;
-  TempSQLQuery.DataBase:= DataModule1.IBConnection1;
-  TempSQLQuery.Transaction:= TempSQLTransaction;
-  TempSQLTransaction.DataBase:= DataModule1.IBConnection1;
-  TempDBGrid.DataSource:= TempDSource;
-  TempSQLQuery.Active:= false;
-  TempSQLQuery.SQL.Text:= 'select * from ' + FName;
-  TempSQLQuery.Open;
-  for i:=0 to  high(TableColumns) do
-    TableColumns[i].ArrData:= TStringList.Create;
-  while not TempSQLQuery.EOF do
+  DataModule1.SQLQuery.Active:= false;
+  if isReferences then
+  DataModule1.SQLQuery.SQL.Text:= 'select * from ' + FName;
+  DataModule1.SQLQuery.Open;
+  SetLength(TempArr, Length(TableColumns));
+  for i:=0 to high(TableColumns) do
+    TempArr[i]:= TStringList.Create;
+  while not DataModule1.SQLQuery.EOF do
   begin
-    for i:=0 to TempDBGrid.Columns.Count - 1 do
-      TableColumns[i].ArrData.Append(TempSQLQuery.Fields[i].AsString);
-    TempSQLQuery.Next;
+    for i:=0 to high(TableColumns) do
+      TempArr[i].Append(DataModule1.SQLQuery.Fields[i].AsString);
+    DataModule1.SQLQuery.Next;
   end;
-  TempSQLQuery.Close;
-  TempDBGrid.Free;
-  TempDSource.Free;
-  TempSQLQuery.Free;
-  TempSQLTransaction.Free;
+  DataModule1.SQLQuery.Close;
+  result:= TempArr;
 end;
 
 {Filters}
