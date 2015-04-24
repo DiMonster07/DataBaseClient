@@ -74,14 +74,16 @@ type
     procedure AddQueryFilter ();
     procedure CreateQueryParams (APointer: TPointFilter);
     procedure OnColumnClick(ANum: integer);
-    procedure OpenFormEditingTable (IdField: integer; Index: integer;
+    procedure OpenFormEditingTable (Index: integer;
       AChangeType: TChangeType);
     procedure FormChangeClose();
     function GetListDataFields(): TListDataFields;
+    function GetListIdFields(): TListDataFields;
     function CreateSortQuery (): string;
     function GenQueryChanges(ATypeAction: TChangeType;
       AListData: TStringList): TStringList;
     procedure FormUpdateData();
+    procedure DeleteArrData();
   published
     property Name: string read FName write FName;
     property Caption: string  read FCaption write FCaption;
@@ -136,21 +138,26 @@ begin
 end;
 
 procedure TTable.FormUpdateData();
-var
-  i: integer;
 begin
   FForm.FSQLQuery.Close;
   FForm.FSQLQuery.Open;
   isChanges:= false;
   ChangeCaptionColumn();
-  for i:=0 to high(TempArrData) do
-    TempArrData[i].Free;
+end;
+
+procedure TTable.DeleteArrData();
+var
+  i: integer;
+begin
+ for i:=0 to high(TempArrData) do
+   TempArrData[i].Free;
 end;
 
 function TTable.GenQueryChanges(ATypeAction: TChangeType;
   AListData: TStringList): TStringList;
 var
   temp: TStringList;
+  temp1: TListDataFields;
   s1, s2, s3: string;
   i: integer;
 begin
@@ -166,9 +173,25 @@ begin
         s1+= ', ';
     end;
     temp.Append(s1);
-    temp.Append('WHERE ID = ' + '''' + AListData[0] + '''');
+    if ATypeAction = ctEditBox then
+    begin
+      temp1:= GetListIdFields;
+      s1:= '';
+      for i:=0 to AListData.Count - 1 do
+      begin
+        s3:= string(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value);
+        s1:= s1 + TableColumns[i].Name + ' = ' + '''' +
+          temp1[i].ValueFromIndex[FFormChange.ArrComboBox[i].Items.IndexOf(s3)] + '''';
+        if i <> AListData.Count - 1 then
+          s1+= 'and ';
+      end;
+      temp.Append('WHERE ' + s1);
+    end
+    else
+      temp.Append('WHERE ' + TableColumns[0].Name +
+        ' = ' + '''' + AListData[0] + '''');
   end;
-  ctInsert:
+  ctInsert, ctInsertBox:
   begin
     s1:= 'INSERT INTO ' + FName;
     for i:=0 to AListData.Count - 1 do
@@ -183,12 +206,13 @@ begin
     s1+= ' (' + s2 + ')';
     temp.Append(s1);
     temp.Append('VALUES (' + s3 + ')');
+    ShowMessage(temp.text);
   end;
   end;
   result:= temp;
 end;
 
-procedure TTable.OpenFormEditingTable (IdField: integer; Index: integer;
+procedure TTable.OpenFormEditingTable (Index: integer;
   AChangeType: TChangeType);
 var
   i, k: integer;
@@ -206,11 +230,8 @@ begin
   FFormChange.BorderStyle:= bsSingle;
   TempArrData:= GetListDataFields;
   case AChangeType of
-  ctEditBox:
+  ctEditBox, ctInsertBox:
   begin
-    for i:=1 to length(TableColumns) do
-      s:= s + String(FForm.FSQLQuery.Fields.FieldByNumber(i).Value) + '|';
-    FFormChange.Caption:= s;
     SetLength(FFormChange.ArrComboBox, length(TableColumns));
     for i:=0 to high(FFormChange.ArrComboBox) do
     begin
@@ -221,6 +242,26 @@ begin
         TempArrData[i].IndexOf(
         String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value));
     end;
+    if AChangeType = ctEditBox then
+       s:= 'Добавление записи'
+    else
+      for i:=1 to length(TableColumns) do
+        s:= s + String(FForm.FSQLQuery.Fields.FieldByNumber(i).Value) + '|';
+    FFormChange.Caption:= s;
+  end;
+  ctEdit:
+  begin
+    for i:=1 to length(TableColumns) do
+      s:= s + String(FForm.FSQLQuery.Fields.FieldByNumber(i).Value) + '|';
+    FFormChange.Caption:= s;
+    SetLength(FFormChange.ArrEdits, length(TableColumns));
+    for i:=0 to high(FFormChange.ArrEdits) do
+    begin
+      FFormChange.CreateFormEditData(i, TableColumns[i].Width);
+      FFormChange.ArrEdits[i].Text:=
+        String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value);
+    end;
+    FFormChange.ArrEdits[0].Enabled:= false;
   end;
   ctInsert:
   begin
@@ -231,18 +272,7 @@ begin
     FFormChange.ArrEdits[0].Text:= IntToStr(GenFreeId);
     FFormChange.Caption:= FFormChange.ArrEdits[0].Text;
   end;
-  ctEdit:
-  begin
-    SetLength(FFormChange.ArrEdits, length(TableColumns));
-    for i:=0 to high(FFormChange.ArrEdits) do
-    begin
-      FFormChange.CreateFormEditData(i, TableColumns[i].Width);
-      FFormChange.ArrEdits[i].Text:=
-        String(FForm.FSQLQuery.Fields.FieldByNumber(i + 1).Value);
-    end;
-    FFormChange.ArrEdits[0].Enabled:= false;
   end;
-end;
   FFormChange.CreateBtn;
   FFormChange.Show;
 end;
@@ -251,19 +281,63 @@ function TTable.GetListDataFields(): TListDataFields;
 var
   TempArr: TListDataFields;
   i: integer;
+  s, s1: string;
 begin
-  DataModule1.SQLQuery.Active:= false;
-  if isReferences then
-  DataModule1.SQLQuery.SQL.Text:= 'select * from ' + FName;
-  DataModule1.SQLQuery.Open;
+  DataModule1.SQLQuery.Close;
   SetLength(TempArr, Length(TableColumns));
   for i:=0 to high(TableColumns) do
     TempArr[i]:= TStringList.Create;
-  while not DataModule1.SQLQuery.EOF do
+  if isReferences then
   begin
     for i:=0 to high(TableColumns) do
-      TempArr[i].Append(DataModule1.SQLQuery.Fields[i].AsString);
-    DataModule1.SQLQuery.Next;
+    begin
+      DataModule1.SQLQuery.Close;
+      DataModule1.SQLQuery.SQL.Text:= 'select ' + TableColumns[i].RefNameField
+        + ' from ' + TableColumns[i].RefTable + 'S';
+      DataModule1.SQLQuery.Open;
+      while not DataModule1.SQLQuery.EOF do
+      begin
+        TempArr[i].Append(DataModule1.SQLQuery.Fields[0].AsString);
+        DataModule1.SQLQuery.Next;
+      end;
+    end;
+  end
+  else
+  begin
+    DataModule1.SQLQuery.SQL.Text:= 'select * from ' + FName;
+    DataModule1.SQLQuery.Open;
+    while not DataModule1.SQLQuery.EOF do
+    begin
+      for i:=0 to high(TableColumns) do
+        TempArr[i].Append(DataModule1.SQLQuery.Fields[i].AsString);
+      DataModule1.SQLQuery.Next;
+    end;
+  end;
+  DataModule1.SQLQuery.Close;
+  result:= TempArr;
+end;
+
+function TTable.GetListIdFields(): TListDataFields;
+var
+  TempArr: TListDataFields;
+  i: integer;
+  s, s1: string;
+begin
+  DataModule1.SQLQuery.Close;
+  SetLength(TempArr, Length(TableColumns));
+  for i:=0 to high(TableColumns) do
+    TempArr[i]:= TStringList.Create;
+  for i:=0 to high(TableColumns) do
+  begin
+    DataModule1.SQLQuery.Close;
+    DataModule1.SQLQuery.SQL.Text:= 'select id from ' +
+      TableColumns[i].RefTable + 'S';
+    DataModule1.SQLQuery.Open;
+    while not DataModule1.SQLQuery.EOF do
+    begin
+      TempArr[i].Append(DataModule1.SQLQuery.Fields[0].AsString);
+      DataModule1.SQLQuery.Next;
+    end;
   end;
   DataModule1.SQLQuery.Close;
   result:= TempArr;
@@ -359,8 +433,6 @@ begin
   FForm.FSQLQuery.Active:= true;
   ChangeCaptionColumn();
   FStatus:= true;
-  //If isReferences then
-  //  FForm.InsertBtn.Enabled:= true;
   FForm.Show;
 end;
 

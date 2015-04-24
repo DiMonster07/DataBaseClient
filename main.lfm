@@ -1,7 +1,7 @@
 object ProgramForm: TProgramForm
-  Left = 314
+  Left = 637
   Height = 583
-  Top = 181
+  Top = 171
   Width = 820
   Caption = 'DataBase Client'
   Constraints.MinHeight = 583

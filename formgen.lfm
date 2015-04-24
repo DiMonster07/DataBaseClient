@@ -1,7 +1,7 @@
 object FormTable: TFormTable
-  Left = 701
+  Left = 585
   Height = 550
-  Top = 248
+  Top = 249
   Width = 1000
   Caption = 'FormTable'
   ClientHeight = 550
@@ -209,12 +209,12 @@ object FormTable: TFormTable
       ParentFont = False
     end
     object AddBtn: TBitBtn
-      Left = 369
-      Height = 32
-      Top = 512
-      Width = 48
+      Left = 272
+      Height = 40
+      Top = 504
+      Width = 145
       Anchors = [akRight, akBottom]
-      Kind = bkHelp
+      Caption = 'Добавить фильтр'
       OnClick = AddBtnClick
       TabOrder = 0
     end

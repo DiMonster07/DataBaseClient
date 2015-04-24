@@ -1,7 +1,7 @@
 object FormChangeData1: TFormChangeData1
-  Left = 850
+  Left = 812
   Height = 53
-  Top = 108
+  Top = 126
   Width = 342
   BorderStyle = bsSingle
   Caption = 'FormChangeData1'

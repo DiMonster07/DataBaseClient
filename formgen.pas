@@ -105,18 +105,38 @@ var
 
 procedure TFormTable.InsertBtnClick(Sender: TObject);
 begin
-  TableArr[Self.Tag].OpenFormEditingTable(StrToInt(
-    FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctInsert);
+  if TableArr[Self.Tag].RefStatus then
+    TableArr[Self.Tag].OpenFormEditingTable(FSQLQuery.RecNo, ctInsertBox)
+  else
+    TableArr[Self.Tag].OpenFormEditingTable(FSQLQuery.RecNo, ctInsert);
 end;
 
 procedure TFormTable.DeleteBtnClick(Sender: TObject);
 var
   temp: TStringList;
+  temp1, temp2: TListDataFields;
+  i, k: integer;
+  s1, s2: string;
 begin
-  temp:= TStringList.Create;
   if FSQLQuery.Fields.FieldByNumber(1).Value = Null then exit;
-  temp.Append('delete from ' + TableArr[Self.Tag].Name + ' where id = ' +
-    '''' + String(FSQLQuery.Fields.FieldByNumber(1).Value) + '''');
+  temp:= TStringList.Create;
+  if TableArr[Self.Tag].RefStatus then
+  begin
+    temp1:= TableArr[Self.Tag].GetListDataFields;
+    temp2:= TableArr[Self.Tag].GetListIdFields;
+    for i:= 0 to high(temp1) do
+    begin
+      k:= temp1[i].IndexOf(string(FSQLQuery.Fields.FieldByNumber(i + 1).Value));
+      s2+= TableArr[Self.Tag].GetColForNum(i).Name +  ' = ' + '''' +
+        temp2[i].ValueFromIndex[k] + '''';
+      if i <> high(temp1) then s2+= ' and ';
+    end;
+    temp.Append('delete from ' + TableArr[Self.Tag].Name + ' where ' + s2);
+  end
+  else
+    temp.Append('delete from ' + TableArr[Self.Tag].Name + ' where id = ' +
+      '''' + String(FSQLQuery.Fields.FieldByNumber(1).Value) + '''');
+  showMessage(temp.text);
   DataModule1.MakeChangesDatabase(temp);
   TableArr[Self.Tag].FormUpdateData();
 end;
@@ -125,27 +145,15 @@ procedure TFormTable.EditBtnClick(Sender: TObject);
 begin
   if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
   if TableArr[Self.Tag].RefStatus then
-    TableArr[Self.Tag].OpenFormEditingTable(
-      StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value),
-      FSQLQuery.RecNo, ctEditBox)
+    TableArr[Self.Tag].OpenFormEditingTable(FSQLQuery.RecNo, ctEditBox)
   else
-  TableArr[Self.Tag].OpenFormEditingTable(
-    StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctEdit);
+    TableArr[Self.Tag].OpenFormEditingTable(FSQLQuery.RecNo, ctEdit);
 end;
 
 procedure TFormTable.FDBGridDblClick(Sender: TObject);
 begin
-  if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
-  if TableArr[Self.Tag].RefStatus then
-    TableArr[Self.Tag].OpenFormEditingTable(
-      StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value),
-      FSQLQuery.RecNo, ctEditBox)
-  else
-  TableArr[Self.Tag].OpenFormEditingTable(
-    StrToInt(FSQLQuery.Fields.FieldByNumber(1).Value), FSQLQuery.RecNo, ctEdit);
+  EditBtnClick(Sender);
 end;
-
-
 
 { TFormTable }
 

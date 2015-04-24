@@ -30,6 +30,7 @@ type
     procedure CreateBtn ();
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure ChangeApplyClick (Sender: TObject);
+    function isNullCheckEdit(): boolean;
   end;
 
 var
@@ -123,20 +124,48 @@ end;
 procedure TFormChangeData1.ChangeApplyClick (Sender: TObject);
 var
   TempList: TStringList;
+  TempList1: TListDataFields;
   i: integer;
+  isVoid: boolean;
 begin
   TempList:= TStringList.Create;
-  if (FAction = ctInsert) or (FAction = ctEdit) then
+  if (FAction = ctEdit) or (FAction = ctInsert) then
+    if isNullCheckEdit() then
+    begin
+      ShowMessage('Заполните все поля!');
+      exit;
+    end;
+  case FAction of
+  ctInsert, ctEdit:
     for i:=0 to high(ArrEdits) do
-      TempList.Append(ArrEdits[i].Text)
-  else
+      TempList.Append(ArrEdits[i].Text);
+  ctInsertBox, ctEditBox:
+  begin
+    TempList1:= TableArr[Self.Tag].GetListIdFields;
     for i:=0 to high(ArrComboBox) do
-      TempList.Append(ArrComboBox[i].Text);
+      TempList.Append(TempList1[i].ValueFromIndex[ArrComboBox[i].ItemIndex]);
+  end;
+  end;
   DataModule1.MakeChangesDatabase(
-    TableArr[Self.Tag].GenQueryChanges(FAction, TempList));
+  TableArr[Self.Tag].GenQueryChanges(FAction, TempList));
   TableArr[Self.Tag].FormUpdateData;
-  TempList.Destroy;
+  TableArr[Self.Tag].DeleteArrData();
   Self.Close;
+end;
+
+function TFormChangeData1.isNullCheckEdit(): boolean;
+var
+  i: integer;
+  res: boolean;
+begin
+  i:= 0;
+  while i <= high(ArrEdits) do
+  begin
+    if ArrEdits[i].Text = '' then
+      exit(true);
+    inc(i);
+  end;
+  result:= false;
 end;
 
 end.
