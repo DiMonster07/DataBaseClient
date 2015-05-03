@@ -1,7 +1,7 @@
 object FormTable: TFormTable
-  Left = 585
+  Left = 920
   Height = 550
-  Top = 249
+  Top = 200
   Width = 1000
   Caption = 'FormTable'
   ClientHeight = 550
@@ -151,7 +151,7 @@ object FormTable: TFormTable
   object FDBGrid: TDBGrid
     Left = 32
     Height = 548
-    Top = 0
+    Top = 2
     Width = 532
     Anchors = [akTop, akLeft, akRight, akBottom]
     Color = clWindow
@@ -159,6 +159,7 @@ object FormTable: TFormTable
     DataSource = FDataSource
     ReadOnly = True
     TabOrder = 0
+    OnColumnSized = FDBGridColumnSized
     OnDblClick = FDBGridDblClick
     OnMouseMove = FDBGridMouseMove
     OnTitleClick = TitleClick

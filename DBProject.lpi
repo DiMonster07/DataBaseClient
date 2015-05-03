@@ -38,7 +38,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="7">
+    <Units Count="10">
       <Unit0>
         <Filename Value="DBProject.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -71,12 +71,12 @@
         <UnitName Value="DBConnection"/>
       </Unit4>
       <Unit5>
-        <Filename Value="formgen.pas"/>
+        <Filename Value="generationforms.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormTable"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="FormGen"/>
+        <UnitName Value="GenerationForms"/>
       </Unit5>
       <Unit6>
         <Filename Value="formchangedata.pas"/>
@@ -86,6 +86,21 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="FormChangeData"/>
       </Unit6>
+      <Unit7>
+        <Filename Value="viewmanager.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ViewManager"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="formsmanager.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FormsManager"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="sqlgenerator.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="SqlGenerator"/>
+      </Unit9>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

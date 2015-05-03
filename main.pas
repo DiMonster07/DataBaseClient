@@ -7,7 +7,8 @@ interface
 uses
   Classes, SysUtils, IBConnection, sqldb, FileUtil, Forms, Controls,
   Graphics, Dialogs, StdCtrls, ExtCtrls, Menus, DbCtrls,
-  Grids, Buttons, ActnList, ComCtrls, DBGrids, Meta, DBConnection;
+  Grids, Buttons, ActnList, ComCtrls, DBGrids, Meta, DBConnection,
+  GenerationForms;
 
 type
 
@@ -18,6 +19,8 @@ type
     FileItem: TMenuItem;
     DirItem: TMenuItem;
     AboutItem: TMenuItem;
+    MenuItem1: TMenuItem;
+    PopupMenu1: TPopupMenu;
     procedure AboutItemClick(Sender: TObject);
     procedure FormClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -72,11 +75,14 @@ end;
    DataModule1.SQLQuery.Open;
    TranslateList:= TStringList.Create;
    TranslateList.LoadFromFile('Meta.in');
+   MetaData:= TMeta.Create;
    c:= 0;
    while not DataModule1.SQLQuery.EOF do
    begin
      s:= CreateItemName(DataModule1.SQLQuery.Fields[0].AsString);
-     CreateTable(s);
+     SetLength(MetaData.MetaTables, length(MetaData.MetaTables) + 1);
+     MetaData.MetaTables[high(MetaData.MetaTables)]:= TMTable.Create;
+     MetaData.MetaTables[high(MetaData.MetaTables)].FillDataTable(s);
      MenuItem:= TMenuItem.Create(DirItem);
      MenuItem.Caption:= TranslateList.Values[s];
      MenuItem.OnClick:= @OnClickMenuItem;
@@ -85,16 +91,19 @@ end;
      inc(c);
      DataModule1.SQLQuery.Next;
    end;
-   for i:=0 to high(TableArr) do
-     TableArr[i].CreateRef;
+   for i:= 0 to high(MetaData.MetaTables) do
+     MetaData.MetaTables[i].FillReferencedField;
+   FormsOfTables:= TFormsOfTables.Create;
    DataModule1.SQLQuery.Close;
  end;
 procedure TProgramForm.OnClickMenuItem (Sender: TObject);
 begin
-  if TableArr[(Sender as TMenuItem).Tag].FStatus then
-    TableArr[(Sender as TMenuItem).Tag].GetForm.Show
-  else
-    TableArr[(Sender as TMenuItem).Tag].CreateForm(Sender);
+  if FormsOfTables.FForms[(Sender as TMenuItem).Tag] = nil then
+  begin
+    FormsOfTables.FForms[(Sender as TMenuItem).Tag]:= TFormTable.Create(Application);
+    FormsOfTables.FForms[(Sender as TMenuItem).Tag].SetParams(Sender);
+  end;
+  FormsOfTables.FForms[(Sender as TMenuItem).Tag].Show;
 end;
 
 end.
