@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, sqldb, db, FileUtil, Forms, Controls, Graphics, Dialogs,
   DBGrids, Menus, DbCtrls, ExtCtrls, StdCtrls, Buttons, Grids, FormChangeData,
-  meta, SqlGenerator, DBConnection;
+  meta, SqlGenerator, DBConnection, windows;
 
 type
 
@@ -85,7 +85,7 @@ type
     procedure FDBGridColumnSized(Sender: TObject);
     procedure FDBGridDblClick(Sender: TObject);
     procedure FDBGridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
     procedure InsertBtnClick(Sender: TObject);
     procedure TitleClick(AColumn: TColumn);
@@ -122,7 +122,6 @@ type
 var
   FormTable: TFormTable;
   FormsOfTables: TFormsOfTables;
-  ChangeNameCB: TChangeEvent;
   ActionArr: array[0..6] of string = ('<', '>', '>=', '<=', '=',
     '<>', 'включает');
 implementation
@@ -157,8 +156,12 @@ begin
   AddFilter((Sender as TBitBtn).Tag);
 end;
 
-procedure TFormTable.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+procedure TFormTable.FormCloseQuery(Sender: TObject; var CanClose: boolean);
+var
+  i: integer;
 begin
+  for i:=0 to high(FFormsChange) do
+    FormsOfTables.FForms[Tag].FFormsChange[i].Free;
   FormsOfTables.FForms[Tag]:= nil;
 end;
 
@@ -265,17 +268,17 @@ begin
   Filters[i].Parametr.Name:= 'param' + IntToStr(i);
   Filters[i].Parametr.NameAction:= Filters[i].ActionBox.Text;
   Filters[i].Parametr.Value:= Filters[i].ValueEdit.Text;
-  k:= temp.NameBox.ItemIndex;
+  k:= temp.NameBox.ItemIndex + 1;
   Filters[i].Parametr.Num:= k;
-  if MetaData.MetaTables[Tag].Fields[k + 1].Reference <> nil then
+  if MetaData.MetaTables[Tag].Fields[k].Reference <> nil then
   begin
-    j:= MetaData.MetaTables[Tag].Fields[k + 1].Reference.TableTag;
+    j:= MetaData.MetaTables[Tag].Fields[k].Reference.TableTag;
     Filters[i].Parametr.NameField:= MetaData.MetaTables[j].Name +
-      '.' + MetaData.MetaTables[Tag].Fields[k + 1].Reference.Name;
+      '.' + MetaData.MetaTables[j].Fields[1].Name;
   end
   else
     Filters[i].Parametr.NameField:= MetaData.MetaTables[Tag].Name + '.' +
-      MetaData.MetaTables[Tag].Fields[k + 1].Name;
+      MetaData.MetaTables[Tag].Fields[k].Name;
   Filters[i].CreateQueryParams;
   AddQueryFilter;
 end;
@@ -452,14 +455,31 @@ begin
 end;
 
 procedure TFormTable.DeleteBtnClick(Sender: TObject);
+var
+  i: LongInt;
 begin
   if FSQLQuery.Fields.FieldByNumber(1).Value = Null then exit;
   DataModule1.SQLQuery.Close;
   DataModule1.SQLQuery.SQL.Text:= 'DELETE FROM ' + MetaData.MetaTables[Tag].Name
     + ' WHERE ID = ' + String(FSQLQuery.Fields.FieldByNumber(1).Value);
-  DataModule1.SQLQuery.ExecSQL;
-  //DataModule1.SQLTransaction1.Commit;
-  InvalidateGrid(Self);
+ // i:= MessageBox(handle, 'Вы действительно хотите удалить эту запись?',
+ //   PChar('Подтверждение удаления'), MB_YESNOCANCEL);
+  i:= MessageDLG('Вы действительно хотите удалить эту запись?',
+      mtConfirmation, mbYesNoCancel, 0);
+  case i of
+    mrYes:
+      begin
+        try
+          DataModule1.SQLQuery.ExecSQL;
+          DataModule1.SQLTransaction1.Commit;
+          InvalidateGrid(Self);
+          FDBGrid.DataSource.DataSet.MoveBy(0);
+        except
+          MessageDLG('Невозможно удалить эту запись т.к. она используется другой таблицей',
+            mtError,[mbYes], 0);
+        end;
+      end;
+  end;
 end;
 
 procedure TFormTable.FDBGridDblClick(Sender: TObject);
@@ -613,10 +633,19 @@ procedure TFilter.EditKeyPress(Sender: TObject; var Key: char);
 var
   temp: TMField;
 begin
-  temp:= MetaData.MetaTables[TagForm].Fields[NameBox.ItemIndex];
-  if Temp.FieldType = TInt then
-    if not (key in ['0'..'9', #8]) then
-      key:= #0;
+  temp:= MetaData.MetaTables[TagForm].Fields[NameBox.ItemIndex + 1];
+  if temp = nil then
+  begin
+    if Temp.FieldType = TInt then
+      if not (key in ['0'..'9', #8]) then
+        key:= #0;
+  end
+  else
+  begin
+    if MetaData.MetaTables[Temp.Reference.TableTag].Fields[1].FieldType = TInt then
+      if not (key in ['0'..'9', #8]) then
+        key:= #0;
+  end;
 end;
 
 procedure TFilter.ChangePos (num: integer);

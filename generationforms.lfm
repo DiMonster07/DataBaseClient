@@ -145,7 +145,7 @@ object FormTable: TFormTable
     0000000000000000000000000000000000000000000000000000000000000000
     0000
   }
-  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   LCLVersion = '1.2.4.0'
   object FDBGrid: TDBGrid

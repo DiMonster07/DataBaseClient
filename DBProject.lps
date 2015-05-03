@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="46">
+    <Units Count="48">
       <Unit0>
         <Filename Value="DBProject.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -21,11 +21,10 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="main"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="57"/>
-        <CursorPos X="1" Y="104"/>
+        <CursorPos X="14" Y="83"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -36,8 +35,8 @@
         <UnitName Value="meta"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="46" Y="8"/>
+        <TopLine Value="139"/>
+        <CursorPos X="27" Y="184"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit2>
@@ -74,9 +73,9 @@
         <UnitName Value="GenerationForms"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="577"/>
-        <CursorPos X="35" Y="337"/>
-        <UsageCount Value="187"/>
+        <TopLine Value="104"/>
+        <CursorPos X="45" Y="164"/>
+        <UsageCount Value="190"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit5>
@@ -87,11 +86,12 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="FormChangeData"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="36" Y="197"/>
-        <UsageCount Value="102"/>
+        <TopLine Value="4"/>
+        <CursorPos X="17" Y="22"/>
+        <UsageCount Value="105"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit6>
@@ -102,7 +102,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="22" Y="1"/>
-        <UsageCount Value="55"/>
+        <UsageCount Value="58"/>
       </Unit7>
       <Unit8>
         <Filename Value="formsmanager.pas"/>
@@ -111,7 +111,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="3" Y="26"/>
-        <UsageCount Value="54"/>
+        <UsageCount Value="57"/>
       </Unit8>
       <Unit9>
         <Filename Value="sqlgenerator.pas"/>
@@ -121,7 +121,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="109"/>
         <CursorPos X="1" Y="151"/>
-        <UsageCount Value="53"/>
+        <UsageCount Value="56"/>
         <Loaded Value="True"/>
       </Unit9>
       <Unit10>
@@ -318,9 +318,9 @@
       <Unit36>
         <Filename Value="D:\lazarus\fpc\2.6.4\source\rtl\objpas\classes\classesh.inc"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1634"/>
-        <CursorPos X="3" Y="1661"/>
-        <UsageCount Value="7"/>
+        <TopLine Value="93"/>
+        <CursorPos X="3" Y="120"/>
+        <UsageCount Value="10"/>
       </Unit36>
       <Unit37>
         <Filename Value="D:\lazarus\fpc\2.6.4\source\rtl\objpas\types.pp"/>
@@ -364,9 +364,9 @@
         <Filename Value="D:\lazarus\lcl\controls.pp"/>
         <UnitName Value="Controls"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="999"/>
-        <CursorPos X="3" Y="1026"/>
-        <UsageCount Value="7"/>
+        <TopLine Value="1985"/>
+        <CursorPos X="49" Y="1598"/>
+        <UsageCount Value="10"/>
       </Unit42>
       <Unit43>
         <Filename Value="D:\lazarus\lcl\lclclasses.pp"/>
@@ -391,131 +391,123 @@
         <CursorPos X="8" Y="79"/>
         <UsageCount Value="8"/>
       </Unit45>
+      <Unit46>
+        <Filename Value="D:\lazarus\lcl\dialogs.pp"/>
+        <UnitName Value="Dialogs"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="3"/>
+        <CursorPos X="54" Y="30"/>
+        <UsageCount Value="10"/>
+      </Unit46>
+      <Unit47>
+        <Filename Value="D:\lazarus\lcl\forms.pp"/>
+        <UnitName Value="Forms"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="724"/>
+        <CursorPos X="3" Y="401"/>
+        <UsageCount Value="10"/>
+      </Unit47>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="24" HistoryIndex="23">
       <Position1>
-        <Filename Value="formchangedata.pas"/>
-        <Caret Line="196" Column="3" TopLine="155"/>
+        <Filename Value="generationforms.pas"/>
+        <Caret Line="477" Column="6" TopLine="438"/>
       </Position1>
       <Position2>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="146" Column="3" TopLine="110"/>
+        <Caret Line="479" Column="5" TopLine="438"/>
       </Position2>
       <Position3>
-        <Filename Value="formchangedata.pas"/>
-        <Caret Line="198" Column="22" TopLine="160"/>
+        <Filename Value="generationforms.pas"/>
+        <Caret Line="477" Column="11" TopLine="437"/>
       </Position3>
       <Position4>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="146" Column="57" TopLine="118"/>
+        <Caret Line="463" Column="104" TopLine="451"/>
       </Position4>
       <Position5>
-        <Filename Value="formchangedata.pas"/>
-        <Caret Line="195" Column="8" TopLine="166"/>
+        <Filename Value="generationforms.pas"/>
+        <Caret Line="462" Column="6" TopLine="435"/>
       </Position5>
       <Position6>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="438" Column="60" TopLine="395"/>
+        <Caret Line="463" Column="73" TopLine="436"/>
       </Position6>
       <Position7>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="436" Column="57" TopLine="425"/>
+        <Caret Line="462" Column="26" TopLine="435"/>
       </Position7>
       <Position8>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="471" Column="46" TopLine="427"/>
+        <Caret Line="463" Column="31" TopLine="436"/>
       </Position8>
       <Position9>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="436" Column="56" TopLine="435"/>
+        <Caret Line="462" Column="22" TopLine="436"/>
       </Position9>
       <Position10>
-        <Filename Value="sqlgenerator.pas"/>
-        <Caret Line="143" Column="4" TopLine="101"/>
+        <Filename Value="generationforms.pas"/>
+        <Caret Line="14" Column="1" TopLine="1"/>
       </Position10>
       <Position11>
-        <Filename Value="sqlgenerator.pas"/>
-        <Caret Line="154" Column="3" TopLine="110"/>
+        <Filename Value="generationforms.pas"/>
+        <Caret Line="464" Column="5" TopLine="425"/>
       </Position11>
       <Position12>
-        <Filename Value="sqlgenerator.pas"/>
-        <Caret Line="150" Column="5" TopLine="134"/>
+        <Filename Value="generationforms.pas"/>
+        <Caret Line="462" Column="54" TopLine="435"/>
       </Position12>
       <Position13>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="461" Column="41" TopLine="417"/>
+        <Caret Line="455" Column="13" TopLine="435"/>
       </Position13>
       <Position14>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="459" Column="71" TopLine="432"/>
+        <Caret Line="462" Column="66" TopLine="435"/>
       </Position14>
       <Position15>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="456" Column="1" TopLine="442"/>
+        <Caret Line="461" Column="7" TopLine="435"/>
       </Position15>
       <Position16>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="457" Column="1" TopLine="442"/>
+        <Caret Line="462" Column="61" TopLine="435"/>
       </Position16>
       <Position17>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="458" Column="1" TopLine="442"/>
+        <Caret Line="461" Column="39" TopLine="434"/>
       </Position17>
       <Position18>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="459" Column="1" TopLine="442"/>
+        <Caret Line="453" Column="74" TopLine="434"/>
       </Position18>
       <Position19>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="460" Column="1" TopLine="442"/>
+        <Caret Line="472" Column="48" TopLine="445"/>
       </Position19>
       <Position20>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="456" Column="1" TopLine="442"/>
+        <Caret Line="378" Column="39" TopLine="325"/>
       </Position20>
       <Position21>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="457" Column="1" TopLine="442"/>
+        <Caret Line="167" Column="3" TopLine="147"/>
       </Position21>
       <Position22>
         <Filename Value="generationforms.pas"/>
-        <Caret Line="458" Column="1" TopLine="442"/>
+        <Caret Line="161" Column="43" TopLine="134"/>
       </Position22>
       <Position23>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="459" Column="1" TopLine="442"/>
+        <Filename Value="formchangedata.pas"/>
+        <Caret Line="22" Column="17" TopLine="4"/>
       </Position23>
       <Position24>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="460" Column="1" TopLine="442"/>
+        <Filename Value="formchangedata.pas"/>
+        <Caret Line="22" Column="17" TopLine="4"/>
       </Position24>
-      <Position25>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="462" Column="24" TopLine="442"/>
-      </Position25>
-      <Position26>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="456" Column="1" TopLine="442"/>
-      </Position26>
-      <Position27>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="441" Column="64" TopLine="391"/>
-      </Position27>
-      <Position28>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="363" Column="48" TopLine="336"/>
-      </Position28>
-      <Position29>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="361" Column="5" TopLine="336"/>
-      </Position29>
-      <Position30>
-        <Filename Value="generationforms.pas"/>
-        <Caret Line="363" Column="10" TopLine="336"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
   <EditorMacros Count="0"/>
