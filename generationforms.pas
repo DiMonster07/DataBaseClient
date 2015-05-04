@@ -78,7 +78,9 @@ type
     InsertBtn: TSpeedButton;
     DeleteBtn: TSpeedButton;
     EditBtn: TSpeedButton;
+    AddFiltersPanelBtn: TSpeedButton;
     procedure AddBtnClick(Sender: TObject);
+    procedure AddFiltersPanelBtnClick(Sender: TObject);
     procedure DeleteBtnClick(Sender: TObject);
     procedure EditBtnClick(Sender: TObject);
     procedure FDBGridColumnSized(Sender: TObject);
@@ -156,7 +158,6 @@ begin
       begin
         if length(FormsOfTables.FForms[k].FFormsChange) <> 0 then
         begin
-          ShowMessage(IntToStr(ATag));
           temp:= MetaData.MetaTables[ATag].GetDataFieldOfIndex(1);
           for i:= 1 to high(MetaData.MetaTables[k].Fields) do
             if MetaData.MetaTables[k].Fields[i].Reference <> nil then
@@ -201,6 +202,13 @@ end;
 procedure TFormTable.AddBtnClick(Sender: TObject);
 begin
   AddFilter((Sender as TBitBtn).Tag);
+end;
+
+procedure TFormTable.AddFiltersPanelBtnClick(Sender: TObject);
+begin
+  FilterPanel.Visible:= true;
+  FDBGrid.Width:= Width - DefWidthFiltersPanel - 38;
+  AddFilter(Tag);
 end;
 
 procedure TFormTable.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -258,7 +266,11 @@ begin
     end;
   end;
   if length(Filters) = 1 then
+  begin
     isFiltred:= false;
+    FDBGrid.Width:= Width - InsertBtn.Width - AddFiltersPanelBtn.Width - 8;
+    FilterPanel.Visible:= false;
+  end;
   SetLength(Filters, length(Filters) - 1);
   AddQueryFilter;
 end;
@@ -282,7 +294,6 @@ var
 begin
   FSQLQuery.SQL.Text:= SQLGen(Tag).Text;
   for i:=0 to high(Filters) do
-  begin
     if Filters[i].isApply then
     begin
       inc(c);
@@ -300,7 +311,6 @@ begin
           Filters[i].Parametr.Value;
       isWasFirst:= true;
     end;
-  end;
 end;
 
 procedure TFormTable.ApplyFilter (Sender: TObject);
@@ -530,22 +540,20 @@ begin
     + ' WHERE ID = ' + String(FSQLQuery.Fields.FieldByNumber(1).Value);
   i:= MessageDLG('Вы действительно хотите удалить эту запись?',
       mtConfirmation, mbYesNoCancel, 0);
-  case i of
-    mrYes:
-      begin
-        try
-          DataModule1.SQLQuery.ExecSQL;
-          //DataModule1.SQLTransaction1.Commit;
-          temp:= isFormOpenedForId(FSQLQuery.Fields[0].Value);
-          if temp <> nil then
-            temp.close;
-          InvalidateGrid(Tag);
-          FDBGrid.DataSource.DataSet.MoveBy(0);
-        except
-          MessageDLG('Невозможно удалить эту запись т.к. она используется другой таблицей',
-            mtError,[mbYes], 0);
-        end;
-      end;
+  if i = mrYes then
+  begin
+    try
+      DataModule1.SQLQuery.ExecSQL;
+      //DataModule1.SQLTransaction1.Commit;
+      temp:= isFormOpenedForId(FSQLQuery.Fields[0].Value);
+      if temp <> nil then
+        temp.close;
+      InvalidateGrid(Tag);
+      FDBGrid.DataSource.DataSet.MoveBy(0);
+    except
+      MessageDLG('Невозможно удалить эту запись т.к. она используется другой таблицей',
+      mtError,[mbYes], 0);
+    end;
   end;
 end;
 

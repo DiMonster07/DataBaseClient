@@ -69,6 +69,9 @@ var
   TranslateList: TStringList;
   ColWidth: integer;
   MetaData: TMeta;
+  DefWidthFiltersPanel: integer = 426;
+  DefWidthGrid: integer = 912;
+  DefWidthGridFiltred: integer = 536;
 
 function CreateItemName (IName: string): string;
 function CheckReference (AName: string): integer;
