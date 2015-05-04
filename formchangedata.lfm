@@ -1,10 +1,12 @@
 object FormChangeData1: TFormChangeData1
-  Left = 1252
+  Left = 1188
   Height = 51
-  Top = 116
+  Top = 167
   Width = 342
   BorderStyle = bsSingle
   Caption = 'FormChangeData1'
+  ClientHeight = 51
+  ClientWidth = 342
   Icon.Data = {
     BE1000000000010001002020000001002000A810000016000000280000002000
     0000400000000100200000000000001000006400000064000000000000000000
@@ -144,4 +146,12 @@ object FormChangeData1: TFormChangeData1
   }
   OnCloseQuery = FormCloseQuery
   LCLVersion = '1.2.4.0'
+  object IdLabel: TLabel
+    Left = 8
+    Height = 1
+    Top = 3
+    Width = 1
+    ParentColor = False
+    Visible = False
+  end
 end

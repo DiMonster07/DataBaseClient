@@ -10,14 +10,16 @@ uses
 
 type
 
+  TChangeEvent = procedure (Sender: TObject) of object;
   TArrWidthParam = array of integer;
   TChangeType = (ctEdit, ctInsert, ctDelete);
   TDelClosedForm = procedure (Sender: TObject) of object;
-  TInvalidateGrid = procedure (Sender: TObject) of OBject;
+  TInvalidateGrid = procedure (ATag: integer) of OBject;
 
   { TFormChangeData1 }
 
   TFormChangeData1 = class(TForm)
+    IdLabel: TLabel;
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
   private
@@ -32,6 +34,7 @@ type
     procedure ChangeApplyClick (Sender: TObject);
     function isNullCheckEdit(): boolean;
     function GetId(ANum: integer): integer;
+    procedure FillComboBox(AList: TStringList; ANum: integer);
   end;
 
 var
@@ -39,7 +42,7 @@ var
   DelClosedForm: TDelClosedForm;
   InvalidateGrid: TInvalidateGrid;
 implementation
-uses meta;
+uses meta, GenerationForms;
 var
   UsedWidth, UsedHeight: integer;
 {$R *.lfm}
@@ -59,6 +62,16 @@ end;
 procedure TFormChangeData1.FormCreate(Sender: TObject);
 begin
   UsedWidth:=0;
+end;
+
+procedure TFormChangeData1.FillComboBox(AList: TStringList; ANum: integer);
+var
+  i: integer;
+begin
+  (ArrControls[ANum] as TComboBox).Clear;
+  for i:= 0 to AList.Count - 1 do
+    (ArrControls[ANum] as TComboBox).Items.Add(AList.ValueFromIndex[i]);
+  (ArrControls[ANum] as TComboBox).ItemIndex:= 0;
 end;
 
 procedure TFormChangeData1.CreateComboBox(AList: TStringList; AName: string;
@@ -179,7 +192,7 @@ begin
   begin
     DataModule1.SQLQuery.SQL.Text:= GenUpdateQuery(Tag).Text;
     DataModule1.SQLQuery.ParamByName('p0').AsInteger:=
-    ArrControls[0].Tag;
+    IdLabel.Tag;
   end;
   for i:= 0 to high(ArrControls) do
   begin
@@ -192,7 +205,7 @@ begin
   end;
   DataModule1.SQLQuery.ExecSQL;
   //DataModule1.SQLTransaction1.Commit;
-  InvalidateGrid(Self);
+  FormsOfTables.FForms[Tag].InvalidateDBGrid(Tag);
   Close;
   //Устанавливает фокус на строку 3
   //FDBGrid.DataSource.DataSet.MoveBy(3);

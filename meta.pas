@@ -43,6 +43,7 @@ type
   private
     FName: string;
     FCaption: string;
+    FRefFields: boolean;
   public
     procedure FillDataTable (ANameTable: string);
     procedure FillDataFields (ANameTable: string);
@@ -52,6 +53,7 @@ type
   published
     property Name: string read FName write FName;
     property Caption: string read FCaption write FCaption;
+    property isRefFields: boolean read FRefFields write FRefFields;
   end;
 
   { TMeta }
@@ -183,6 +185,7 @@ end;
        Fields[i].Reference:= TMField.Create;
        Fields[i].Reference:= MetaData.FindTableOfName(s + 'S').FindFieldOfName(s1);
        Fields[i].Caption:= TranslateList.Values['Caption_' + Fields[i].Name];
+       FRefFields:= true;
      end;
      s:= '';
      s1:= '';

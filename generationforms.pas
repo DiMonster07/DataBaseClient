@@ -11,7 +11,6 @@ uses
 
 type
 
-  TChangeEvent = procedure (Sender: TObject) of object;
   TArrayForms = array of TFormChangeData1;
   { TParametr }
 
@@ -93,6 +92,7 @@ type
   private
     FFiltredStatus: boolean;
     FSortedStatus: boolean;
+    FUpdate: TChangeEvent;
   public
     Filters: TFiltersArray;
     FFormsChange: TArrayForms;
@@ -105,10 +105,13 @@ type
     procedure OnColumnClick(ANum: integer);
     procedure OpenFormEditingTable (Index: integer; AChangeType: TChangeType);
     procedure FDelClosedForms (Sender: TObject);
-    procedure InvalidateDBGrid(Sender: TObject);
+    procedure InvalidateDBGrid(ATag: integer);
+    procedure UpdateDataEditingForms (ATag: integer);
+    function isFormOpenedForId(AId: integer): TFormChangeData1;
   published
     property isFiltred: boolean read FFiltredStatus write FFiltredStatus;
     property isSorted: boolean read FSortedStatus write FSortedStatus;
+    property Update: TChangeEvent read FUpdate write FUpdate;
   end;
 
   { TFormsOfTables }
@@ -139,11 +142,55 @@ end;
 
 { TFormTable }
 
-procedure TFormTable.InvalidateDBGrid(Sender: TObject);
+procedure TFormTable.UpdateDataEditingForms (ATag: integer);
+var
+  i, k, h, g: integer;
+  temp: TStringList;
+  s, s1: string;
 begin
-  FormsOfTables.FForms[(Sender as TForm).Tag].FSQLQuery.Close;
-  FormsOfTables.FForms[(Sender as TForm).Tag].FSQLQuery.Open;
+  temp:= TStringList.Create;
+  for k:= 0 to high(MetaData.MetaTables) do
+    if MetaData.MetaTables[k].isRefFields then
+    begin
+      if FormsOfTables.FForms[k] <> nil then
+      begin
+        if length(FormsOfTables.FForms[k].FFormsChange) <> 0 then
+        begin
+          ShowMessage(IntToStr(ATag));
+          temp:= MetaData.MetaTables[ATag].GetDataFieldOfIndex(1);
+          for i:= 1 to high(MetaData.MetaTables[k].Fields) do
+            if MetaData.MetaTables[k].Fields[i].Reference <> nil then
+              if MetaData.MetaTables[k].Fields[i].Reference.TableTag = ATag then
+              begin
+                g:= i - 1;
+                break;
+              end;
+          for h:=0 to high(FormsOfTables.FForms[k].FFormsChange) do
+            FormsOfTables.FForms[k].FFormsChange[h].FillComboBox(Temp, g);
+        end;
+        FormsOfTables.FForms[k].InvalidateDBGrid(ATag);
+      end;
+    end;
+end;
+
+function TFormTable.isFormOpenedForId(AId: integer): TFormChangeData1;
+var
+  i, k: integer;
+begin
+  k:= -1;
+  for i:=0 to high(FFormsChange) do
+    if FFormsChange[i].IdLabel.Tag = AId then
+      exit(FFormsChange[i]);
+  result:= nil;
+end;
+
+procedure TFormTable.InvalidateDBGrid(ATag: integer);
+begin
+  FSQLQuery.Close;
+  FSQLQuery.Open;
   ChangeCaptionColumn();
+  if not MetaData.MetaTables[Tag].isRefFields then
+    UpdateDataEditingForms(ATag);
 end;
 
 procedure TFormTable.FDBGridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -380,6 +427,7 @@ end;
        begin
            FormsOfTables.FForms[j].FFormsChange[k]:=
              FormsOfTables.FForms[j].FFormsChange[k + 1];
+           FormsOfTables.FForms[j].FFormsChange[k].ArrControls[0].Tag:= k;
            FormsOfTables.FForms[j].FFormsChange[k + 1]:= nil;
        end;
        break;
@@ -401,6 +449,7 @@ end;
    FFormsChange[high(FFormsChange)].Tag:= Tag;
    FFormsChange[high(FFormsChange)].FAction:= AChangeType;
    FFormsChange[high(FFormsChange)].BorderStyle:= bsSingle;
+   FFormsChange[high(FFormsChange)].IdLabel.Tag:= FSQLQuery.Fields[0].Value;
    temp:= TStringList.Create;
    k:= GenUniqId;
    s:= '';
@@ -437,33 +486,48 @@ end;
      else
        FFormsChange[high(FFormsChange)].Caption:= 'Новая запись';
    end;
-   FFormsChange[high(FFormsChange)].ArrControls[0].Tag:=
-     FSQLQuery.Fields.FieldByNumber(1).Value;
+   FFormsChange[high(FFormsChange)].ArrControls[0].Tag:= high(FFormsChange);
    FFormsChange[high(FFormsChange)].CreateBtn;
    FFormsChange[high(FFormsChange)].Show;
  end;
 
 procedure TFormTable.InsertBtnClick(Sender: TObject);
+var
+  temp: TFormChangeData1;
 begin
-  OpenFormEditingTable(FSQLQuery.RecNo, ctInsert);
+  temp:= isFormOpenedForId(FSQLQuery.Fields[0].Value);
+  if temp = nil then
+  begin
+    if isFormOpenedForId(FSQLQuery.Fields[0].Value) = nil  then
+      OpenFormEditingTable(FSQLQuery.RecNo, ctInsert);
+  end
+  else
+    temp.Show;
 end;
 
 procedure TFormTable.EditBtnClick(Sender: TObject);
+var
+  temp: TFormChangeData1;
 begin
-  if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
-    OpenFormEditingTable(FSQLQuery.RecNo, ctEdit);
+  temp:= isFormOpenedForId(FSQLQuery.Fields[0].Value);
+  if temp = nil then
+  begin
+    if trunc(KoY/FDBGrid.DefaultRowHeight) = 0 then exit;
+      OpenFormEditingTable(FSQLQuery.RecNo, ctEdit);
+  end
+  else
+    temp.show;
 end;
 
 procedure TFormTable.DeleteBtnClick(Sender: TObject);
 var
   i: LongInt;
+  temp: TFormChangeData1;
 begin
   if FSQLQuery.Fields.FieldByNumber(1).Value = Null then exit;
   DataModule1.SQLQuery.Close;
   DataModule1.SQLQuery.SQL.Text:= 'DELETE FROM ' + MetaData.MetaTables[Tag].Name
     + ' WHERE ID = ' + String(FSQLQuery.Fields.FieldByNumber(1).Value);
- // i:= MessageBox(handle, 'Вы действительно хотите удалить эту запись?',
- //   PChar('Подтверждение удаления'), MB_YESNOCANCEL);
   i:= MessageDLG('Вы действительно хотите удалить эту запись?',
       mtConfirmation, mbYesNoCancel, 0);
   case i of
@@ -471,8 +535,11 @@ begin
       begin
         try
           DataModule1.SQLQuery.ExecSQL;
-          DataModule1.SQLTransaction1.Commit;
-          InvalidateGrid(Self);
+          //DataModule1.SQLTransaction1.Commit;
+          temp:= isFormOpenedForId(FSQLQuery.Fields[0].Value);
+          if temp <> nil then
+            temp.close;
+          InvalidateGrid(Tag);
           FDBGrid.DataSource.DataSet.MoveBy(0);
         except
           MessageDLG('Невозможно удалить эту запись т.к. она используется другой таблицей',
