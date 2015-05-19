@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, IBConnection, sqldb, FileUtil, Forms, Controls,
   Graphics, Dialogs, StdCtrls, ExtCtrls, Menus, DbCtrls,
   Grids, Buttons, ActnList, ComCtrls, DBGrids, Meta, DBConnection,
-  GenerationForms;
+  GenerationForms, Utimetableform;
 
 type
 
@@ -20,6 +20,7 @@ type
     DirItem: TMenuItem;
     AboutItem: TMenuItem;
     MenuItem1: TMenuItem;
+    TimetableItem: TMenuItem;
     PopupMenu1: TPopupMenu;
     procedure AboutItemClick(Sender: TObject);
     procedure FormClick(Sender: TObject);
@@ -27,6 +28,7 @@ type
     procedure FormPaint(Sender: TObject);
     procedure CreateMenuTable ();
     procedure OnClickMenuItem (Sender: TObject);
+    procedure TimetableItemClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -104,6 +106,12 @@ begin
     FormsOfTables.FForms[(Sender as TMenuItem).Tag].SetParams(Sender);
   end;
   FormsOfTables.FForms[(Sender as TMenuItem).Tag].Show;
+end;
+
+procedure TProgramForm.TimetableItemClick(Sender: TObject);
+begin
+  TimetableForm:= TTimetableForm.Create(Application);
+  TimetableForm.Show;
 end;
 
 end.

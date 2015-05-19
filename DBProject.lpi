@@ -38,7 +38,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="10">
+    <Units Count="11">
       <Unit0>
         <Filename Value="DBProject.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -101,6 +101,14 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="SqlGenerator"/>
       </Unit9>
+      <Unit10>
+        <Filename Value="utimetableform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="TimetableForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="Utimetableform"/>
+      </Unit10>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

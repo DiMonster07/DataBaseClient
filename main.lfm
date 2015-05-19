@@ -1,11 +1,11 @@
 object ProgramForm: TProgramForm
-  Left = 1257
-  Height = 150
-  Top = 414
-  Width = 300
+  Left = 849
+  Height = 125
+  Top = 587
+  Width = 400
   Caption = 'DataBase Client'
-  Constraints.MinHeight = 150
-  Constraints.MinWidth = 300
+  Constraints.MinHeight = 125
+  Constraints.MinWidth = 400
   Icon.Data = {
     BE1000000000010001002020000001002000A810000016000000280000002000
     0000400000000100200000000000001000006400000064000000000000000000
@@ -152,6 +152,10 @@ object ProgramForm: TProgramForm
     top = 8
     object FileItem: TMenuItem
       Caption = 'Файл'
+    end
+    object TimetableItem: TMenuItem
+      Caption = 'Расписание'
+      OnClick = TimetableItemClick
     end
     object DirItem: TMenuItem
       Caption = 'Справочник'

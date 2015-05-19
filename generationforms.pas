@@ -12,6 +12,14 @@ uses
 type
 
   TArrayForms = array of TFormChangeData1;
+
+
+  { TCommonClass }
+
+  TCommonClass = class (TForm)
+
+  end;
+
   { TParametr }
 
   TParametr = class
@@ -64,6 +72,34 @@ type
 
   TFiltersArray = array of TFilter;
 
+  { TEditingManager }
+
+  TEditingManager = class
+  private
+
+  public
+
+  published
+
+  end;
+
+  { TFiltersManager }
+
+  TFiltersManager = class
+  private
+    Filters: TFiltersArray;
+    FFiltredStatus: boolean;
+  public
+    procedure AddFilter (ADBGrid: TDBGrid; APanel: TPanel; ATag: integer);
+    procedure DelFilter(ADBGrid: TDBGrid; ATag: integer);
+    procedure ApplyFilter(ATag, AIndex: integer);
+    procedure GenQueryFilter (ASQLQuery: TSQLQuery; ATag: integer);
+    procedure SetCountFilters (ACount: integer);
+    function GetCountFilters(): integer;
+  published
+    property isFiltred: boolean read FFiltredStatus write FFiltredStatus;
+  end;
+
   { TFormTable }
 
   TFormTable = class(TForm)
@@ -92,26 +128,21 @@ type
     procedure TitleClick(AColumn: TColumn);
     procedure SetParams (Sender: TObject);
   private
-    FFiltredStatus: boolean;
     FSortedStatus: boolean;
     FUpdate: TChangeEvent;
   public
-    Filters: TFiltersArray;
+    FiltersManager: TFiltersManager;
     FFormsChange: TArrayForms;
-    procedure AddFilter(ATag: integer);
     procedure DelFilter(ATag: integer);
     procedure ApplyFilter(Sender: TObject);
-    procedure ChangeCaptionColumn();
     procedure AddQueryFilter ();
-    procedure GenQueryFilter ();
+    procedure ChangeCaptionColumn();
     procedure OnColumnClick(ANum: integer);
     procedure OpenFormEditingTable (Index: integer; AChangeType: TChangeType);
     procedure FDelClosedForms (Sender: TObject);
     procedure InvalidateDBGrid(ATag: integer);
-    procedure UpdateDataEditingForms (ATag: integer);
     function isFormOpenedForId(AId: integer): TFormChangeData1;
   published
-    property isFiltred: boolean read FFiltredStatus write FFiltredStatus;
     property isSorted: boolean read FSortedStatus write FSortedStatus;
     property Update: TChangeEvent read FUpdate write FUpdate;
   end;
@@ -122,6 +153,7 @@ type
   public
     FForms: array of TFormTable;
     constructor Create;
+    procedure UpdateDataEditingForms (ATag: integer);
   end;
 
 var
@@ -142,9 +174,7 @@ begin
   SetLength(FForms, length(MetaData.MetaTables));
 end;
 
-{ TFormTable }
-
-procedure TFormTable.UpdateDataEditingForms (ATag: integer);
+procedure TFormsOfTables.UpdateDataEditingForms (ATag: integer);
 var
   i, k, h, g: integer;
   temp: TStringList;
@@ -154,9 +184,9 @@ begin
   for k:= 0 to high(MetaData.MetaTables) do
     if MetaData.MetaTables[k].isRefFields then
     begin
-      if FormsOfTables.FForms[k] <> nil then
+      if FForms[k] <> nil then
       begin
-        if length(FormsOfTables.FForms[k].FFormsChange) <> 0 then
+        if length(FForms[k].FFormsChange) <> 0 then
         begin
           temp:= MetaData.MetaTables[ATag].GetDataFieldOfIndex(1);
           for i:= 1 to high(MetaData.MetaTables[k].Fields) do
@@ -166,13 +196,15 @@ begin
                 g:= i - 1;
                 break;
               end;
-          for h:=0 to high(FormsOfTables.FForms[k].FFormsChange) do
-            FormsOfTables.FForms[k].FFormsChange[h].FillComboBox(Temp, g);
+          for h:=0 to high(FForms[k].FFormsChange) do
+            FForms[k].FFormsChange[h].FillComboBox(Temp, g);
         end;
-        FormsOfTables.FForms[k].InvalidateDBGrid(ATag);
+        FForms[k].InvalidateDBGrid(ATag);
       end;
     end;
 end;
+
+{ TFormTable }
 
 function TFormTable.isFormOpenedForId(AId: integer): TFormChangeData1;
 var
@@ -191,24 +223,12 @@ begin
   FSQLQuery.Open;
   ChangeCaptionColumn();
   if not MetaData.MetaTables[Tag].isRefFields then
-    UpdateDataEditingForms(ATag);
+    FormsOfTables.UpdateDataEditingForms(ATag);
 end;
 
 procedure TFormTable.FDBGridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
   KoY:= Y;
-end;
-
-procedure TFormTable.AddBtnClick(Sender: TObject);
-begin
-  AddFilter((Sender as TBitBtn).Tag);
-end;
-
-procedure TFormTable.AddFiltersPanelBtnClick(Sender: TObject);
-begin
-  FilterPanel.Visible:= true;
-  FDBGrid.Width:= Width - DefWidthFiltersPanel - 38;
-  AddFilter(Tag);
 end;
 
 procedure TFormTable.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -225,6 +245,7 @@ begin
   FDBGrid.OnTitleClick:= @TitleClick;
   DelClosedForm:= @FDelClosedForms;
   InvalidateGrid:= @InvalidateDBGrid;
+  FiltersManager:= TFiltersManager.Create;
 end;
 
 procedure TFormTable.TitleClick(AColumn: TColumn);
@@ -232,124 +253,45 @@ begin
   OnColumnClick (AColumn.Index);
 end;
 
-procedure TFormTable.AddFilter (ATag: integer);
-var
-  TempList: TStringList;
-  i: integer;
+procedure TFormTable.AddBtnClick(Sender: TObject);
 begin
-  if length(Filters) > 12 then exit;
-  SetLength(Filters, length(Filters) + 1);
-  Filters[high(Filters)]:= TFilter.Create;
-  Filters[high(Filters)].CreateFilter(FilterPanel, high(Filters));
-  Filters[high(Filters)].TagForm:= ATag;
-  TempList:= TStringList.Create;
-  for i:=0 to FDBGrid.Columns.Count - 1 do
-    if FDBGrid.Columns.Items[i].Visible then
-      TempList.Append(MetaData.MetaTables[Tag].Fields[i].Caption);
-  Filters[high(Filters)].FillCB(TempList);
+  FiltersManager.AddFilter(FDBGrid, FilterPanel, Tag);
+end;
+
+procedure TFormTable.AddFiltersPanelBtnClick(Sender: TObject);
+begin
+  FilterPanel.Visible:= true;
+  FDBGrid.Width:= Width - DefWidthFiltersPanel - 38;
+  FiltersManager.AddFilter(FDBGrid, FilterPanel, Tag);
 end;
 
 procedure TFormTable.DelFilter(ATag: integer);
-var
-  i, k: integer;
 begin
-  k:= ATag;
-  for i:= k to high(Filters) - 1 do
+  FiltersManager.DelFilter(FDBGrid, ATag);
+  if FiltersManager.GetCountFilters = 0 then
   begin
-    Filters[i]:= Filters[i + 1];
-    Filters[i + 1]:= nil;
-    Filters[i].ChangePos(i);
-    if Filters[i].isApply then
-    begin
-      Filters[i].Parametr.Name:= 'param' + IntToStr(i);
-      Filters[i].CreateQueryParams;
-    end;
-  end;
-  if length(Filters) = 1 then
-  begin
-    isFiltred:= false;
+    FiltersManager.isFiltred:= false;
     FDBGrid.Width:= Width - InsertBtn.Width - AddFiltersPanelBtn.Width - 8;
     FilterPanel.Visible:= false;
   end;
-  SetLength(Filters, length(Filters) - 1);
   AddQueryFilter;
 end;
 
 procedure TFormTable.AddQueryFilter ();
 var
   i, c: integer;
-  isWasFirst: boolean = false;
 begin
   FSQLQuery.Close;
-  GenQueryFilter;
+  FiltersManager.GenQueryFilter(FSQLQuery, Tag);
   FSQLQuery.SQL.Append(CreateSortQuery(Tag));
   FSQLQuery.Open;
   ChangeCaptionColumn();
 end;
 
-procedure TFormTable.GenQueryFilter ();
-var
-  i, c: integer;
-  isWasFirst: boolean = false;
-begin
-  FSQLQuery.SQL.Text:= SQLGen(Tag).Text;
-  for i:=0 to high(Filters) do
-    if Filters[i].isApply then
-    begin
-      inc(c);
-      if not isWasFirst then
-        FSQLQuery.SQL.Text:= FSQLQuery.SQL.Text + ' where ' +
-          Filters[i].Parametr.Query
-      else
-        FSQLQuery.SQL.Text:= FSQLQuery.SQL.Text + ' and ' +
-          Filters[i].Parametr.Query;
-      if Filters[i].Parametr.Like then
-        FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:= '%' +
-          Filters[i].Parametr.Value + '%'
-      else
-        FSQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
-          Filters[i].Parametr.Value;
-      isWasFirst:= true;
-    end;
-end;
-
 procedure TFormTable.ApplyFilter (Sender: TObject);
-var
-  i, k, j: integer;
-  temp: TFilter;
 begin
-  i:= (Sender as TSpeedButton).Tag;
-  temp:= Filters[(Sender as TSpeedButton).Tag];
-  Filters[i].isApply:= true;
-  Filters[i].Parametr:= TParametr.Create;
-  Filters[i].Parametr.Name:= 'param' + IntToStr(i);
-  Filters[i].Parametr.NameAction:= Filters[i].ActionBox.Text;
-  Filters[i].Parametr.Value:= Filters[i].ValueEdit.Text;
-  k:= temp.NameBox.ItemIndex + 1;
-  Filters[i].Parametr.Num:= k;
-  if MetaData.MetaTables[Tag].Fields[k].Reference <> nil then
-  begin
-    j:= MetaData.MetaTables[Tag].Fields[k].Reference.TableTag;
-    Filters[i].Parametr.NameField:= MetaData.MetaTables[j].Name +
-      '.' + MetaData.MetaTables[j].Fields[1].Name;
-  end
-  else
-    Filters[i].Parametr.NameField:= MetaData.MetaTables[Tag].Name + '.' +
-      MetaData.MetaTables[Tag].Fields[k].Name;
-  Filters[i].CreateQueryParams;
+  FiltersManager.ApplyFilter(Tag, (Sender as TSpeedButton).Tag);
   AddQueryFilter;
-end;
-
-procedure TFilter.CreateQueryParams ();
-begin
-  if Parametr.NameAction = ActionArr[6] then
-  begin
-    Parametr.Query:= Parametr.NameField + ' LIKE :' + Parametr.Name + ' ';
-    Parametr.Like:= true;
-  end
-  else
-    Parametr.Query:= Parametr.NameField + ' ' + Parametr.NameAction + ' :' +
-      Parametr.Name + ' ';
 end;
 
 procedure TFormTable.ChangeCaptionColumn();
@@ -406,7 +348,7 @@ end;
 
 procedure TFormTable.SetParams (Sender: TObject);
 begin
-  SetLength(Filters, 0);
+  FiltersManager.SetCountFilters(0);
   Tag:= (Sender as TMenuItem).Tag;
   FilterPanel.Tag:= Tag;
   EditBtn.Tag:= Tag;
@@ -575,6 +517,108 @@ begin
   end;
 end;
 
+
+
+{ TFiltersManager }
+
+function TFiltersManager.GetCountFilters(): integer;
+begin
+  result:= length(Filters);
+end;
+
+procedure TFiltersManager.SetCountFilters (ACount: integer);
+begin
+  SetLength(Filters, ACount);
+end;
+
+procedure TFiltersManager.AddFilter (ADBGrid: TDBGrid; APanel: TPanel;
+  ATag: integer);
+var
+  TempList: TStringList;
+  i: integer;
+begin
+  if length(Filters) > 12 then exit;
+  SetLength(Filters, length(Filters) + 1);
+  Filters[high(Filters)]:= TFilter.Create;
+  Filters[high(Filters)].CreateFilter(APanel, high(Filters));
+  Filters[high(Filters)].TagForm:= ATag;
+  TempList:= TStringList.Create;
+  for i:=0 to ADBGrid.Columns.Count - 1 do
+    if ADBGrid.Columns.Items[i].Visible then
+      TempList.Append(MetaData.MetaTables[ATag].Fields[i].Caption);
+  Filters[high(Filters)].FillCB(TempList);
+end;
+
+procedure TFiltersManager.DelFilter(ADBGrid: TDBGrid; ATag: integer);
+var
+  i, k: integer;
+begin
+  k:= ATag;
+  for i:= k to high(Filters) - 1 do
+  begin
+    Filters[i]:= Filters[i + 1];
+    Filters[i + 1]:= nil;
+    Filters[i].ChangePos(i);
+    if Filters[i].isApply then
+    begin
+      Filters[i].Parametr.Name:= 'param' + IntToStr(i);
+      Filters[i].CreateQueryParams;
+    end;
+  end;
+  SetLength(Filters, length(Filters) - 1);
+end;
+
+procedure TFiltersManager.GenQueryFilter (ASQLQuery: TSQLQuery; ATag: integer);
+var
+  i, c: integer;
+  isWasFirst: boolean = false;
+begin
+  ASQLQuery.SQL.Text:= SQLGen(ATag).Text;
+  for i:=0 to high(Filters) do
+    if Filters[i].isApply then
+    begin
+      inc(c);
+      if not isWasFirst then
+        ASQLQuery.SQL.Text:= ASQLQuery.SQL.Text + ' where ' +
+          Filters[i].Parametr.Query
+      else
+        ASQLQuery.SQL.Text:= ASQLQuery.SQL.Text + ' and ' +
+          Filters[i].Parametr.Query;
+      if Filters[i].Parametr.Like then
+        ASQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:= '%' +
+          Filters[i].Parametr.Value + '%'
+      else
+        ASQLQuery.ParamByName(Filters[i].Parametr.Name).AsString:=
+          Filters[i].Parametr.Value;
+      isWasFirst:= true;
+    end;
+end;
+
+procedure TFiltersManager.ApplyFilter (ATag, AIndex: integer);
+var
+  i, k, j: integer;
+  temp: TFilter;
+begin
+  temp:= Filters[AIndex];
+  Filters[AIndex].isApply:= true;
+  Filters[AIndex].Parametr:= TParametr.Create;
+  Filters[AIndex].Parametr.Name:= 'param' + IntToStr(AIndex);
+  Filters[AIndex].Parametr.NameAction:= Filters[AIndex].ActionBox.Text;
+  Filters[AIndex].Parametr.Value:= Filters[AIndex].ValueEdit.Text;
+  k:= temp.NameBox.ItemIndex + 1;
+  Filters[AIndex].Parametr.Num:= k;
+  if MetaData.MetaTables[ATag].Fields[k].Reference <> nil then
+  begin
+    j:= MetaData.MetaTables[ATag].Fields[k].Reference.TableTag;
+    Filters[AIndex].Parametr.NameField:= MetaData.MetaTables[j].Name +
+      '.' + MetaData.MetaTables[j].Fields[1].Name;
+  end
+  else
+    Filters[AIndex].Parametr.NameField:= MetaData.MetaTables[ATag].Name + '.' +
+      MetaData.MetaTables[ATag].Fields[k].Name;
+  Filters[AIndex].CreateQueryParams;
+end;
+
 { TFilters }
 
 procedure TFilter.CreateFilter(APanel: TPanel; Count: integer);
@@ -682,6 +726,18 @@ begin
   i:= DelBtn.Tag;
   DestroyFilter;
   FormsOfTables.FForms[k].DelFilter(i);
+end;
+
+procedure TFilter.CreateQueryParams ();
+begin
+  if Parametr.NameAction = ActionArr[6] then
+  begin
+    Parametr.Query:= Parametr.NameField + ' LIKE :' + Parametr.Name + ' ';
+    Parametr.Like:= true;
+  end
+  else
+    Parametr.Query:= Parametr.NameField + ' ' + Parametr.NameAction + ' :' +
+      Parametr.Name + ' ';
 end;
 
 procedure TFilter.OnChangeParam (Sender: TObject);
