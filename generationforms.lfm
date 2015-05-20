@@ -1,7 +1,7 @@
 object FormTable: TFormTable
-  Left = 809
+  Left = 810
   Height = 400
-  Top = 123
+  Top = 125
   Width = 700
   Caption = 'FormTable'
   ClientHeight = 400
@@ -147,6 +147,7 @@ object FormTable: TFormTable
   }
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  Position = poScreenCenter
   LCLVersion = '1.2.4.0'
   object FDBGrid: TDBGrid
     Left = 32

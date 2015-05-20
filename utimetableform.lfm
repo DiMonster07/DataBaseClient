@@ -1,7 +1,7 @@
 object TimetableForm: TTimetableForm
-  Left = 824
+  Left = 902
   Height = 550
-  Top = 931
+  Top = 259
   Width = 900
   Caption = 'TimetableForm'
   ClientHeight = 550

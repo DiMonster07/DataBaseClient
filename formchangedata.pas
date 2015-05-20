@@ -13,7 +13,7 @@ type
   TChangeEvent = procedure (Sender: TObject) of object;
   TArrWidthParam = array of integer;
   TChangeType = (ctEdit, ctInsert, ctDelete);
-  TDelClosedForm = procedure (Sender: TObject) of object;
+  TDelClosedForm = procedure (Sender: TObject);
   TInvalidateGrid = procedure (ATag: integer) of OBject;
 
   { TFormChangeData1 }
@@ -22,8 +22,6 @@ type
     IdLabel: TLabel;
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
-  private
-    { private declarations }
   public
     FAction: TChangeType;
     ArrControls: array of TControl;
@@ -39,7 +37,7 @@ type
 
 var
   FormChangeData1: TFormChangeData1;
-  DelClosedForm: TDelClosedForm;
+  DelEditingForm: TDelClosedForm;
   InvalidateGrid: TInvalidateGrid;
 implementation
 uses meta, GenerationForms;
@@ -56,7 +54,7 @@ begin
   for i:=0 to high(ArrControls) do
     ArrControls[i].Free;
   SetLength(ArrControls, 0);
-  DelClosedForm(Sender);
+  DelEditingForm(Sender);
 end;
 
 procedure TFormChangeData1.FormCreate(Sender: TObject);
@@ -191,8 +189,7 @@ begin
   else
   begin
     DataModule1.SQLQuery.SQL.Text:= GenUpdateQuery(Tag).Text;
-    DataModule1.SQLQuery.ParamByName('p0').AsInteger:=
-    IdLabel.Tag;
+    DataModule1.SQLQuery.ParamByName('p0').AsInteger:= IdLabel.Tag;
   end;
   for i:= 0 to high(ArrControls) do
   begin
@@ -205,7 +202,7 @@ begin
   end;
   DataModule1.SQLQuery.ExecSQL;
   //DataModule1.SQLTransaction1.Commit;
-  FormsOfTables.FForms[Tag].InvalidateDBGrid(Tag);
+  (FormsOfTables.FForms[Tag] as TFormTable).InvalidateDBGrid(Tag);
   Close;
   //Устанавливает фокус на строку 3
   //FDBGrid.DataSource.DataSet.MoveBy(3);

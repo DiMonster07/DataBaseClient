@@ -1,5 +1,5 @@
 object FormChangeData1: TFormChangeData1
-  Left = 1578
+  Left = 1164
   Height = 51
   Top = 128
   Width = 342
