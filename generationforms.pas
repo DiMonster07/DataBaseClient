@@ -55,16 +55,16 @@ type
     AppStatus: boolean;
     FTag: integer;
   public
-    procedure CreateFilter(APanel: TPanel; Count: integer);
-    procedure CreateQueryParams ();
-    procedure ChangePos (num: integer);
-    procedure AppClick (Sender: TObject);
+    procedure CreateFilter(APanel: TPanel; Count: integer); virtual;
+    procedure CreateQueryParams (); virtual;
+    procedure ChangePos (num: integer); virtual;
+    procedure AppClick (Sender: TObject); virtual;
     procedure DelClick (Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure FillCB (AList: TStringList);
-    procedure OnChangeParam (Sender: TObject);
-    procedure EditKeyPress(Sender: TObject; var Key: char);
-    destructor DestroyFilter ();
+      Shift: TShiftState; X, Y: Integer); virtual;
+    procedure FillCB (AList: TStringList); virtual;
+    procedure OnChangeParam (Sender: TObject); virtual;
+    procedure EditKeyPress(Sender: TObject; var Key: char); virtual;
+    destructor DestroyFilter (); virtual;
   published
     property isApply: boolean read AppStatus write AppStatus;
     property TagForm: integer read FTag write FTag;
@@ -84,7 +84,7 @@ type
     procedure InsertRecord(ASQlQuery: TSQLQuery; ATag: integer);
     procedure EditRecord(ASQlQuery: TSQLQuery; ADBGrid: TDBGrid;
       ATag: integer);
-    procedure DeleteRecord(ADBGrid: TDBGrid; ASQLQuery: TSQLQuery;
+    procedure DeleteRecord(ASQLQuery: TSQLQuery;
       ATag: integer);
     procedure CloseAllForms (ATag: integer);
     procedure FillComboBox(AList: TStringList; ANum: integer; Index: integer);
@@ -99,12 +99,13 @@ type
     Filters: TFiltersArray;
     FFiltredStatus: boolean;
   public
-    procedure AddFilter (ADBGrid: TDBGrid; APanel: TPanel; ATag: integer);
-    procedure DelFilter(ADBGrid: TDBGrid; ATag: integer);
-    procedure ApplyFilter(ATag, AIndex: integer);
-    procedure GenQueryFilter (ASQLQuery: TSQLQuery; ATag: integer);
-    procedure SetCountFilters (ACount: integer);
-    function GetCountFilters(): integer;
+    procedure AddFilter (APanel: TPanel; ATag: integer); virtual;
+    procedure DelFilter(ATag: integer); virtual;
+    procedure ApplyFilter(ATag, AIndex: integer); virtual;
+    procedure GenQueryFilter (ASQLQuery: TSQLQuery; ATag: integer); virtual;
+    function GenDataForCB(ATag: integer): TStringList; virtual;
+    procedure SetCountFilters (ACount: integer); virtual;
+    function GetCountFilters(): integer; virtual;
   published
     property isFiltred: boolean read FFiltredStatus write FFiltredStatus;
   end;
@@ -116,7 +117,7 @@ type
     FDataSource: TDataSource;
     FDBGrid: TDBGrid;
     FDBNavigator: TDBNavigator;
-    FilterPanel: TPanel;
+    FiltersPanel: TPanel;
     Label1: TLabel;
     FSQLQuery: TSQLQuery;
     FSQLTransaction: TSQLTransaction;
@@ -170,6 +171,7 @@ var
 
 procedure FDelEditingForm (Sender: TObject);
 implementation
+uses Utimetableform;
 var
   KoY: integer;
 
@@ -179,8 +181,7 @@ var
 
 procedure FDelEditingForm (Sender: TObject);
 begin
-  (FormsOfTables.FForms[(Sender as TForm).Tag] as TFormTable as TFormTable)
-    .EditingManager.DelEditingForms;
+  FormsOfTables.FForms[(Sender as TForm).Tag].EditingManager.DelEditingForms;
 end;
 
 { TEditingManager }
@@ -309,7 +310,7 @@ begin
    temp.show;
 end;
 
-procedure TEditingManager.DeleteRecord(ADBGrid: TDBGrid; ASQLQuery: TSQLQuery;
+procedure TEditingManager.DeleteRecord(ASQLQuery: TSQLQuery;
   ATag: integer);
 var
  i: LongInt;
@@ -329,8 +330,7 @@ begin
      temp:= isFormOpenedForId(ASQLQuery.Fields[0].Value);
      if temp <> nil then
        temp.close;
-     (FormsOfTables.FForms[ATag] as TFormTable).InvalidateDBGrid(ATag);
-     ADBGrid.DataSource.DataSet.MoveBy(0);
+     FormsOfTables.FForms[ATag].InvalidateDBGrid(ATag);
    except
      MessageDLG('Невозможно удалить эту запись т.к. она используется другой таблицей',
      mtError,[mbYes], 0);
@@ -363,7 +363,7 @@ end;
 
 procedure TFormTable.DeleteBtnClick(Sender: TObject);
 begin
-  EditingManager.DeleteRecord(FDBGrid, FSQLQuery, Tag);
+  EditingManager.DeleteRecord(FSQLQuery, Tag);
 end;
 
 procedure TFormTable.FDBGridDblClick(Sender: TObject);
@@ -403,7 +403,7 @@ begin
     begin
       if FForms[k] <> nil then
       begin
-        if (FForms[k] as TFormTable).EditingManager.GetCountForms <> 0 then
+        if FForms[k].EditingManager.GetCountForms <> 0 then
         begin
           temp:= MetaData.MetaTables[ATag].GetDataFieldOfIndex(1);
           for i:= 1 to high(MetaData.MetaTables[k].Fields) do
@@ -414,9 +414,9 @@ begin
                 break;
               end;
           for h:=0 to (FForms[k] as TFormTable).EditingManager.GetCountForms - 1 do
-            (FForms[k] as TFormTable).EditingManager.FillComboBox(Temp, g, h);
+            FForms[k].EditingManager.FillComboBox(Temp, g, h);
         end;
-        (FForms[k] as TFormTable).InvalidateDBGrid(ATag);
+        FForms[k].InvalidateDBGrid(ATag);
       end;
     end;
 end;
@@ -459,24 +459,24 @@ end;
 
 procedure TFormTable.AddBtnClick(Sender: TObject);
 begin
-  FiltersManager.AddFilter(FDBGrid, FilterPanel, Tag);
+  FiltersManager.AddFilter(FiltersPanel, Tag);
 end;
 
 procedure TFormTable.AddFiltersPanelBtnClick(Sender: TObject);
 begin
-  FilterPanel.Visible:= true;
+  FiltersPanel.Visible:= true;
   FDBGrid.Width:= Width - DefWidthFiltersPanel - 38;
-  FiltersManager.AddFilter(FDBGrid, FilterPanel, Tag);
+  FiltersManager.AddFilter(FiltersPanel, Tag);
 end;
 
 procedure TFormTable.DelFilter(ATag: integer);
 begin
-  FiltersManager.DelFilter(FDBGrid, ATag);
+  FiltersManager.DelFilter(ATag);
   if FiltersManager.GetCountFilters = 0 then
   begin
     FiltersManager.isFiltred:= false;
     FDBGrid.Width:= Width - InsertBtn.Width - AddFiltersPanelBtn.Width - 8;
-    FilterPanel.Visible:= false;
+    FiltersPanel.Visible:= false;
   end;
   AddQueryFilter;
 end;
@@ -494,7 +494,7 @@ end;
 
 procedure TFormTable.ApplyFilter (Sender: TObject);
 begin
-  FiltersManager.ApplyFilter(Tag, (Sender as TSpeedButton).Tag);
+  //FiltersManager.ApplyFilter(Tag, (Sender as TSpeedButton).Tag);
   AddQueryFilter;
 end;
 
@@ -553,7 +553,7 @@ procedure TFormTable.SetParams (Sender: TObject);
 begin
   FiltersManager.SetCountFilters(0);
   Tag:= (Sender as TMenuItem).Tag;
-  FilterPanel.Tag:= Tag;
+  FiltersPanel.Tag:= Tag;
   EditBtn.Tag:= Tag;
   InsertBtn.Tag:= Tag;
   DeleteBtn.Tag:= Tag;
@@ -579,25 +579,29 @@ begin
   SetLength(Filters, ACount);
 end;
 
-procedure TFiltersManager.AddFilter (ADBGrid: TDBGrid; APanel: TPanel;
-  ATag: integer);
+function TFiltersManager.GenDataForCB(ATag: integer): TStringList;
 var
   TempList: TStringList;
   i: integer;
+begin
+  TempList:= TStringList.Create;
+  for i:=0 to length(MetaData.MetaTables[ATag].Fields) - 1 do
+    if MetaData.MetaTables[ATag].Fields[i].Caption <> 'ИН' then
+      TempList.Append(MetaData.MetaTables[ATag].Fields[i].Caption);
+  result:= TempList;
+end;
+
+procedure TFiltersManager.AddFilter (APanel: TPanel; ATag: integer);
 begin
   if length(Filters) > 9 then exit;
   SetLength(Filters, length(Filters) + 1);
   Filters[high(Filters)]:= TFilter.Create;
   Filters[high(Filters)].CreateFilter(APanel, high(Filters));
   Filters[high(Filters)].TagForm:= ATag;
-  TempList:= TStringList.Create;
-  for i:=0 to ADBGrid.Columns.Count - 1 do
-    if ADBGrid.Columns.Items[i].Visible then
-      TempList.Append(MetaData.MetaTables[ATag].Fields[i].Caption);
-  Filters[high(Filters)].FillCB(TempList);
+  Filters[high(Filters)].FillCB(GenDataForCB(ATag));
 end;
 
-procedure TFiltersManager.DelFilter(ADBGrid: TDBGrid; ATag: integer);
+procedure TFiltersManager.DelFilter(ATag: integer);
 var
   i, k: integer;
 begin
@@ -641,8 +645,6 @@ begin
       isWasFirst:= true;
     end;
 end;
-
-
 
 procedure TFiltersManager.ApplyFilter (ATag, AIndex: integer);
 var
@@ -759,14 +761,30 @@ begin
 end;
 
 procedure TFilter.AppClick (Sender: TObject);
+var
+  i, k: integer;
 begin
+  k:= TagForm;
+  i:= DelBtn.Tag;
   if (NameBox.Text = '') or (ActionBox.Text = '') or (ValueEdit.Text = '') then
   begin
     ShowMessage('Заполните все поля');
     exit;
   end;
   ApplyBtn.Enabled:= false;
-  (FormsOfTables.FForms[Panel.Parent.Tag] as TFormTable).ApplyFilter(Sender);
+  if FormsOfTables.FForms[k] = nil then
+  begin
+    ShowMessage('baaew');
+    TimetableForm.FiltersManager.ApplyFilter(k, i);
+    TimetableForm.AddQueryFilter;
+  end
+  else
+  begin
+    FormsOfTables.FForms[k].FiltersManager.ApplyFilter(k, i);
+    FormsOfTables.FForms[k].AddQueryFilter;
+  //FormsOfTables.FForms[k].ApplyFilter(Sender);
+  //FiltersManager.ApplyFilter(Tag, (Sender as TSpeedButton).Tag);
+  end;
 end;
 
 procedure TFilter.DelClick (Sender: TObject; Button: TMouseButton; Shift: TShiftState;
@@ -777,7 +795,10 @@ begin
   k:= TagForm;
   i:= DelBtn.Tag;
   DestroyFilter;
-  (FormsOfTables.FForms[k] as TFormTable).DelFilter(i);
+  if FormsOfTables.FForms[k] = nil then
+     TimetableForm.DelFilter(i)
+  else
+     FormsOfTables.FForms[k].DelFilter(i)
 end;
 
 procedure TFilter.CreateQueryParams ();

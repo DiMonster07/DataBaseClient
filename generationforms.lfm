@@ -1,7 +1,7 @@
 object FormTable: TFormTable
-  Left = 810
+  Left = 903
   Height = 400
-  Top = 125
+  Top = 205
   Width = 700
   Caption = 'FormTable'
   ClientHeight = 400
@@ -185,10 +185,10 @@ object FormTable: TFormTable
     TabOrder = 1
     VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast]
   end
-  object FilterPanel: TPanel
-    Left = 274
+  object FiltersPanel: TPanel
+    Left = 272
     Height = 398
-    Top = 0
+    Top = 2
     Width = 430
     Anchors = [akTop, akRight, akBottom]
     BorderWidth = 1

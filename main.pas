@@ -23,6 +23,7 @@ type
     TimetableItem: TMenuItem;
     PopupMenu1: TPopupMenu;
     procedure AboutItemClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
     procedure FormClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
@@ -38,19 +39,30 @@ type
 
 var
   ProgramForm: TProgramForm;
+  DefRowHeight: integer;
+  count: integer;
 implementation
 {$R *.lfm}
 { ProgramForm }
+
 
 procedure TProgramForm.FormCreate(Sender: TObject);
 begin
   DataModule1.DBConnect();
   CreateMenuTable;
+  DefRowHeight:= 22;
+  count:= 0;
 end;
 
 procedure TProgramForm.AboutItemClick(Sender: TObject);
 begin
   ShowMessage('Разработчик: Дмитрий Томак')
+end;
+
+procedure TProgramForm.Button1Click(Sender: TObject);
+begin
+  //StringGrid1.Canvas.TextRect(StringGrid1.CellRect(1,1), 0,0, 'ewbw', );
+  inc(count);
 end;
 
 procedure TProgramForm.FormClick(Sender: TObject);
@@ -111,6 +123,7 @@ end;
 procedure TProgramForm.TimetableItemClick(Sender: TObject);
 begin
   TimetableForm:= TTimetableForm.Create(Application);
+  TimetableForm.SetParams(Sender);
   TimetableForm.Show;
 end;
 

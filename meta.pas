@@ -14,6 +14,7 @@ type
   TTypeField = (TInt, TStr);
   TListDataFields = array of TStringList;
   TTypeOrder = (None, Up, Down);
+  TStyleOrder = (Default, byId);
 
   { TMField }
 
@@ -26,6 +27,7 @@ type
     FType: TTypeField;
     FReference: TMField;
     FOrderStatus: TTypeOrder;
+    FStyleOrder: TStyleOrder;
   published
     property Name: string read FName write FName;
     property Caption: string read FCaption write FCaption;
@@ -34,6 +36,7 @@ type
     property FieldType: TTypeField read FType write FType;
     property Reference: TMField read FReference write FReference;
     property isOrder: TTypeOrder read FOrderStatus write FOrderStatus;
+    property StyleOrder: TStyleOrder read FStyleOrder write FStyleOrder;
   end;
 
   { TMTable }

@@ -15,6 +15,7 @@ function GenQueryChanges(): TStringList;
 function GenUniqId (): integer;
 function GenInsertQuery(ANum: integer): TStringList;
 function GenUpdateQuery(ANum: integer): TStringList;
+function GetNameField(ATag, Index: integer): string;
 
 implementation
 
@@ -58,6 +59,21 @@ begin
   result:= res;
 end;
 
+function GetNameField(ATag, Index: integer): string;
+var
+  t: integer;
+begin
+  if MetaData.MetaTables[ATag].Fields[index + 1].Reference <> nil then
+  begin
+    t:= MetaData.MetaTables[ATag].Fields[index + 1].Reference.TableTag;
+    result:= MetaData.MetaTables[t].Name + '.' +
+      MetaData.MetaTables[t].Fields[1].Name;
+  end
+  else
+    result:= MetaData.MetaTables[ATag].Name + '.' +
+      MetaData.MetaTables[ATag].Fields[index + 1].Name;
+end;
+
 function CreateSortQuery (ATag: integer): string;
 var
   i, c, t: integer;
@@ -73,8 +89,11 @@ begin
           if MetaData.MetaTables[ATag].Fields[i].Reference <> nil then
           begin
             t:= MetaData.MetaTables[ATag].Fields[i].Reference.TableTag;
-            ts:= MetaData.MetaTables[t].Name + '.' +
-              MetaData.MetaTables[t].Fields[1].Name;
+            ts:= MetaData.MetaTables[t].Name + '.';
+            if MetaData.MetaTables[t].Name = 'WEEKDAYS' then
+              ts+= MetaData.MetaTables[t].Fields[0].Name
+            else
+              ts+= MetaData.MetaTables[t].Fields[1].Name;
           end
           else
             ts:= MetaData.MetaTables[ATag].Name + '.' +
