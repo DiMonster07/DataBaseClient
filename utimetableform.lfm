@@ -1,7 +1,7 @@
 object TimetableForm: TTimetableForm
-  Left = 790
+  Left = 648
   Height = 550
-  Top = 257
+  Top = 202
   Width = 900
   Caption = 'TimetableForm'
   ClientHeight = 550
@@ -22,14 +22,14 @@ object TimetableForm: TTimetableForm
     TabOrder = 0
     object DataSelectionPanel: TPanel
       Left = 0
-      Height = 56
+      Height = 112
       Top = 0
-      Width = 536
-      ClientHeight = 56
-      ClientWidth = 536
+      Width = 216
+      ClientHeight = 112
+      ClientWidth = 216
       TabOrder = 0
       object DataSelectionLabel: TLabel
-        Left = 160
+        Left = 72
         Height = 15
         Top = 0
         Width = 92
@@ -40,16 +40,16 @@ object TimetableForm: TTimetableForm
       object ColumnCB: TComboBox
         Left = 62
         Height = 23
-        Top = 16
+        Top = 52
         Width = 144
         ItemHeight = 15
         OnChange = CBChange
         TabOrder = 0
       end
       object RowCB: TComboBox
-        Left = 256
+        Left = 62
         Height = 23
-        Top = 16
+        Top = 20
         Width = 144
         ItemHeight = 15
         OnChange = CBChange
@@ -58,27 +58,54 @@ object TimetableForm: TTimetableForm
       object ColumnLabel: TLabel
         Left = 8
         Height = 15
-        Top = 20
+        Top = 56
         Width = 50
         Caption = 'Столбцы'
         ParentColor = False
       end
       object RowLabel: TLabel
-        Left = 213
+        Left = 8
         Height = 15
-        Top = 20
+        Top = 24
         Width = 40
         Caption = 'Строки'
         ParentColor = False
       end
       object ApplyBtn: TSpeedButton
-        Left = 420
+        Left = 110
         Height = 31
-        Top = 12
+        Top = 80
         Width = 96
         Caption = 'Применить'
         OnClick = ApplyBtnClick
       end
+    end
+    object RowListBox: TCheckListBox
+      Left = 216
+      Height = 112
+      Top = 0
+      Width = 152
+      ItemHeight = 0
+      OnItemClick = RowListBoxItemClick
+      TabOrder = 1
+    end
+    object DataListBox: TCheckListBox
+      Left = 516
+      Height = 112
+      Top = 0
+      Width = 172
+      ItemHeight = 0
+      OnItemClick = DataListBoxItemClick
+      TabOrder = 2
+    end
+    object ColListBox: TCheckListBox
+      Left = 372
+      Height = 112
+      Top = 0
+      Width = 140
+      ItemHeight = 0
+      OnItemClick = RowListBoxItemClick
+      TabOrder = 3
     end
   end
   object OpenFiltersPanelBtn: TSpeedButton
@@ -102,7 +129,7 @@ object TimetableForm: TTimetableForm
     Top = 112
     Width = 836
     Anchors = [akTop, akLeft, akRight, akBottom]
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goThumbTracking]
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goThumbTracking, goSmoothScroll]
     TabOrder = 2
     OnDblClick = DataStringGridDblClick
     OnDrawCell = DataStringGridDrawCell

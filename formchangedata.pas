@@ -202,10 +202,8 @@ begin
   end;
   DataModule1.SQLQuery.ExecSQL;
   //DataModule1.SQLTransaction1.Commit;
-  (FormsOfTables.FForms[Tag] as TFormTable).InvalidateDBGrid(Tag);
+  GlobalUpdate(Tag);
   Close;
-  //Устанавливает фокус на строку 3
-  //FDBGrid.DataSource.DataSet.MoveBy(3);
 end;
 
 function TFormChangeData1.GetId(ANum: integer): integer;
@@ -227,8 +225,7 @@ begin
   k:= (ArrControls[ANum] as TComboBox).ItemIndex;
   i:= MetaData.MetaTables[Tag].Fields[ANum + 1].Reference.TableTag;
   TempSQLQuery.Close;
-  TempSQLQuery.SQL.Text:= 'SELECT * FROM ' +
-    MetaData.MetaTables[i].Name;
+  TempSQLQuery.SQL.Text:= 'SELECT * FROM ' + MetaData.MetaTables[i].Name;
   TempSQLQuery.Open;
   while not TempSQLQuery.EOF do
   begin

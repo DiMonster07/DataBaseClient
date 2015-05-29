@@ -79,13 +79,11 @@ type
     FFormsChange: TArrayForms;
   public
     procedure DelEditingForms ();
-    procedure OpenFormEditingTable (ASQLQuery: TSQLQuery;
-      AChangeType: TChangeType; ATag: integer);
-    procedure InsertRecord(ASQlQuery: TSQLQuery; ATag: integer);
-    procedure EditRecord(ASQlQuery: TSQLQuery; ADBGrid: TDBGrid;
-      ATag: integer);
-    procedure DeleteRecord(ASQLQuery: TSQLQuery;
-      ATag: integer);
+    procedure OpenFormEditingTable (AChangeType: TChangeType;
+      ATag: integer; AList: TStringList);
+    procedure InsertRecord(ATag: integer; AList: TStringList);
+    procedure EditRecord(ATag: integer; AList: TStringList);
+    procedure DeleteRecord(AId, ATag: integer);
     procedure CloseAllForms (ATag: integer);
     procedure FillComboBox(AList: TStringList; ANum: integer; Index: integer);
     function isFormOpenedForId(AId: integer): TFormChangeData1;
@@ -170,6 +168,7 @@ var
   MarginLeft: integer = 50;
 
 procedure FDelEditingForm (Sender: TObject);
+procedure GlobalUpdate(ATag: integer);
 implementation
 uses Utimetableform;
 var
@@ -179,9 +178,20 @@ var
 
 { Other Function }
 
+procedure GlobalUpdate(ATag: integer);
+begin
+  if FormsOfTables.FForms[ATag] <> nil then
+    FormsOfTables.FForms[ATag].InvalidateDBGrid(ATag);
+  If TimetableForm <> nil then
+    TimetableForm.FillGridData
+end;
+
 procedure FDelEditingForm (Sender: TObject);
 begin
-  FormsOfTables.FForms[(Sender as TForm).Tag].EditingManager.DelEditingForms;
+  if FormsOfTables.FForms[(Sender as TForm).Tag] <> nil then
+    FormsOfTables.FForms[(Sender as TForm).Tag].EditingManager.DelEditingForms
+  else
+    TimetableForm.EditingManager.DelEditingForms;
 end;
 
 { TEditingManager }
@@ -209,7 +219,8 @@ procedure TEditingManager.DelEditingForms ();
 var
   i, k: integer;
 begin
-   for i:= 0 to high(FFormsChange) do
+  if length(FFormsChange) = 0 then exit;
+  for i:= 0 to high(FFormsChange) do
     if not FFormsChange[i].Visible then
     begin
       FFormsChange[i].Free;
@@ -224,14 +235,15 @@ begin
   SetLength(FFormsChange, length(FFormsChange) - 1);
 end;
 
-procedure TEditingManager.OpenFormEditingTable (ASQLQuery: TSQLQuery;
-  AChangeType: TChangeType; ATag: integer);
+procedure TEditingManager.OpenFormEditingTable (AChangeType: TChangeType;
+  ATag: integer; AList: TStringList);
 var
   i, k, j: integer;
   s: string;
   temp: TStringList;
   TempControl: array of TControl;
 begin
+  Randomize;
   SetLength(FFormsChange, length(FFormsChange) + 1);
   FFormsChange[high(FFormsChange)]:= TFormChangeData1.Create(Application);
   with FFormsChange[high(FFormsChange)] do
@@ -241,7 +253,8 @@ begin
     Top:= ATag*Height;
     FAction:= AChangeType;
     BorderStyle:= bsSingle;
-    IdLabel.Tag:= ASQLQuery.Fields[0].Value;
+    if AList.Count <> 0 then
+      IdLabel.Tag:= StrToInt(AList[0]);
     temp:= TStringList.Create;
     k:= GenUniqId;
     s:= '';
@@ -257,20 +270,20 @@ begin
           begin
             CreateComboBox(temp, Fields[i].Caption, Fields[i].Width);
             k:= high(ArrControls);
-            j:= temp.IndexOf(string(ASQLQuery.Fields.FieldByNumber(i + 1).Value));
-            (ArrControls[k] as TComboBox).ItemIndex:= j;
+            if AChangeType = ctEdit then
+              (ArrControls[k] as TComboBox).ItemIndex:= temp.IndexOf(Alist[i])
+            else
+              (ArrControls[k] as TComboBox).ItemIndex:= Random(temp.Count);
           end
           else
           begin
             CreateEdit(Fields[i].Caption, Fields[i].Width);
             k:= high(ArrControls);
-            (ArrControls[k] as TEdit).Text:=
-              string(ASQLQuery.Fields.FieldByNumber(i + 1).Value);
+            (ArrControls[k] as TEdit).Text:= Alist[i];
           end;
-          s:= s + string(ASQLQuery.Fields.FieldByNumber(i + 1).Value) + '||';
         end;
         if AChangeType = ctEdit then
-          Caption:= s
+          Caption:= 'Редактирование записи'
         else
           Caption:= 'Новая запись';
       end;
@@ -281,45 +294,35 @@ begin
   end;
 end;
 
-procedure TEditingManager.InsertRecord(ASQlQuery: TSQLQuery; ATag: integer);
+procedure TEditingManager.InsertRecord(ATag: integer; AList: TStringList);
 var
  temp: TFormChangeData1;
 begin
- temp:= isFormOpenedForId(ASQLQuery.Fields[0].Value);
- if temp = nil then
- begin
-   if isFormOpenedForId(ASQLQuery.Fields[0].Value) = nil  then
-     OpenFormEditingTable(ASQLQuery, ctInsert, ATag);
- end
- else
-   temp.Show;
+  OpenFormEditingTable(ctInsert, ATag, AList)
 end;
 
-procedure TEditingManager.EditRecord(ASQlQuery: TSQLQuery; ADBGrid: TDBGrid;
-  ATag: integer);
+procedure TEditingManager.EditRecord(ATag: integer; AList: TStringList);
 var
  temp: TFormChangeData1;
 begin
- temp:= isFormOpenedForId(ASQLQuery.Fields[0].Value);
+ temp:= isFormOpenedForId(StrToInt(AList[0]));
  if temp = nil then
  begin
-   if trunc(KoY/ADBGrid.DefaultRowHeight) = 0 then exit;
-     OpenFormEditingTable(ASQLQuery, ctEdit, ATag);
+   if trunc(KoY/20) = 0 then exit;
+   OpenFormEditingTable(ctEdit, ATag, AList);
  end
  else
    temp.show;
 end;
 
-procedure TEditingManager.DeleteRecord(ASQLQuery: TSQLQuery;
-  ATag: integer);
+procedure TEditingManager.DeleteRecord(AId, ATag: integer);
 var
  i: LongInt;
  temp: TFormChangeData1;
 begin
- if ASQLQuery.Fields.FieldByNumber(1).Value = Null then exit;
  DataModule1.SQLQuery.Close;
  DataModule1.SQLQuery.SQL.Text:= 'DELETE FROM ' + MetaData.MetaTables[ATag].Name
-   + ' WHERE ID = ' + String(ASQLQuery.Fields.FieldByNumber(1).Value);
+   + ' WHERE ID = ' + IntToStr(AId);
  i:= MessageDLG('Вы действительно хотите удалить эту запись?',
      mtConfirmation, mbYesNoCancel, 0);
  if i = mrYes then
@@ -327,15 +330,16 @@ begin
    try
      DataModule1.SQLQuery.ExecSQL;
      //DataModule1.SQLTransaction1.Commit;
-     temp:= isFormOpenedForId(ASQLQuery.Fields[0].Value);
+     temp:= isFormOpenedForId(AId);
      if temp <> nil then
        temp.close;
-     FormsOfTables.FForms[ATag].InvalidateDBGrid(ATag);
+     //FormsOfTables.FForms[ATag].InvalidateDBGrid(ATag);
    except
      MessageDLG('Невозможно удалить эту запись т.к. она используется другой таблицей',
      mtError,[mbYes], 0);
    end;
  end;
+ GlobalUpdate(ATag);
 end;
 
 function TEditingManager.isFormOpenedForId(AId: integer): TFormChangeData1;
@@ -352,18 +356,32 @@ end;
 { Editing }
 
 procedure TFormTable.InsertBtnClick(Sender: TObject);
+var
+  i: integer;
+  temp: TStringList;
 begin
-  EditingManager.InsertRecord(FSQlQuery, Tag);
+ temp:= TStringList.Create;
+ for i:=0 to FSQLQuery.Fields.Count - 1 do
+   temp.Append(string(FSQLQuery.Fields.Fields[i].Value));
+ EditingManager.InsertRecord(Tag, temp);
 end;
 
 procedure TFormTable.EditBtnClick(Sender: TObject);
+var
+  i: integer;
+  temp: TStringList;
 begin
-  EditingManager.EditRecord(FSQlQuery, FDBGrid, Tag);
+  temp:= TStringList.Create;
+  for i:=0 to FSQLQuery.Fields.Count - 1 do
+    temp.Append(string(FSQLQuery.Fields.Fields[i].Value));
+  EditingManager.EditRecord(Tag, temp);
 end;
 
 procedure TFormTable.DeleteBtnClick(Sender: TObject);
 begin
-  EditingManager.DeleteRecord(FSQLQuery, Tag);
+  if FSQLQuery.Fields.FieldByNumber(1).Value = Null then exit;
+  EditingManager.DeleteRecord(FSQLQuery.Fields.FieldByNumber(1).Value,
+    Tag);
 end;
 
 procedure TFormTable.FDBGridDblClick(Sender: TObject);
@@ -494,7 +512,6 @@ end;
 
 procedure TFormTable.ApplyFilter (Sender: TObject);
 begin
-  //FiltersManager.ApplyFilter(Tag, (Sender as TSpeedButton).Tag);
   AddQueryFilter;
 end;
 
@@ -774,16 +791,13 @@ begin
   ApplyBtn.Enabled:= false;
   if FormsOfTables.FForms[k] = nil then
   begin
-    ShowMessage('baaew');
     TimetableForm.FiltersManager.ApplyFilter(k, i);
-    TimetableForm.AddQueryFilter;
+    TimetableForm.FillGridData;
   end
   else
   begin
     FormsOfTables.FForms[k].FiltersManager.ApplyFilter(k, i);
     FormsOfTables.FForms[k].AddQueryFilter;
-  //FormsOfTables.FForms[k].ApplyFilter(Sender);
-  //FiltersManager.ApplyFilter(Tag, (Sender as TSpeedButton).Tag);
   end;
 end;
 
