@@ -105,6 +105,7 @@ end;
      inc(c);
      DataModule1.SQLQuery.Next;
    end;
+   DirItem.Delete(8);
    for i:= 0 to high(MetaData.MetaTables) do
      MetaData.MetaTables[i].FillReferencedField;
    FormsOfTables:= TFormsOfTables.Create;
