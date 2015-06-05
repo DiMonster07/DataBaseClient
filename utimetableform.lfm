@@ -1,7 +1,7 @@
 object TimetableForm: TTimetableForm
-  Left = 648
+  Left = 596
   Height = 550
-  Top = 202
+  Top = 157
   Width = 900
   Caption = 'TimetableForm'
   ClientHeight = 550
@@ -129,7 +129,7 @@ object TimetableForm: TTimetableForm
     Top = 112
     Width = 836
     Anchors = [akTop, akLeft, akRight, akBottom]
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goThumbTracking, goSmoothScroll]
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goThumbTracking, goSmoothScroll]
     TabOrder = 2
     OnDblClick = DataStringGridDblClick
     OnDrawCell = DataStringGridDrawCell

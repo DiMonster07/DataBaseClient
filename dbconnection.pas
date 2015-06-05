@@ -12,9 +12,11 @@ type
   { TDataModule1 }
 
   TDataModule1 = class(TDataModule)
+    DataSource1: TDataSource;
     DSource: TDataSource;
     IBConnection1: TIBConnection;
     SQLQuery: TSQLQuery;
+    SQLQuery1: TSQLQuery;
     SQLTransaction1: TSQLTransaction;
     procedure DataModuleCreate(Sender: TObject);
   public

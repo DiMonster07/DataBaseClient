@@ -1,9 +1,9 @@
 object DataModule1: TDataModule1
   OnCreate = DataModuleCreate
   OldCreateOrder = False
-  Height = 115
-  HorizontalOffset = 1190
-  VerticalOffset = 888
+  Height = 178
+  HorizontalOffset = 1226
+  VerticalOffset = 733
   Width = 384
   object IBConnection1: TIBConnection
     Connected = False
@@ -33,5 +33,18 @@ object DataModule1: TDataModule1
     DataSet = SQLQuery
     left = 304
     top = 32
+  end
+  object DataSource1: TDataSource
+    DataSet = SQLQuery1
+    left = 304
+    top = 96
+  end
+  object SQLQuery1: TSQLQuery
+    FieldDefs = <>
+    Database = IBConnection1
+    Transaction = SQLTransaction1
+    Params = <>
+    left = 236
+    top = 96
   end
 end

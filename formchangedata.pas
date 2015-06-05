@@ -31,7 +31,6 @@ type
     procedure CreateBtn ();
     procedure ChangeApplyClick (Sender: TObject);
     function isNullCheckEdit(): boolean;
-    function GetId(ANum: integer): integer;
     procedure FillComboBox(AList: TStringList; ANum: integer);
   end;
 
@@ -161,24 +160,15 @@ end;
 
 procedure TFormChangeData1.ChangeApplyClick (Sender: TObject);
 var
-  TempList: TStringList;
   i, key, num: integer;
   s: string;
 begin
-  TempList:= TStringList.Create;
   if (FAction = ctEdit) or (FAction = ctInsert) then
     if isNullCheckEdit() then
     begin
       ShowMessage('Заполните все поля!');
       exit;
     end;
-  for i:=0 to high(ArrControls) do
-  begin
-    if ArrControls[i] is TEdit then
-      TempList.Append((ArrControls[i] as TEdit).Text)
-    else
-      TempList.Append((ArrControls[i] as TComboBox).Caption)
-  end;
   DataModule1.SQLQuery.Close;
   if FAction = ctInsert then
   begin
@@ -195,7 +185,8 @@ begin
   begin
     s:= 'p' + IntToStr(i + 1);
     if MetaData.MetaTables[Tag].Fields[i + 1].Reference <> nil then
-      DataModule1.SQLQuery.ParamByName(s).AsInteger:= GetId(i)
+      DataModule1.SQLQuery.ParamByName(s).AsInteger:= GetId(Tag, i,
+        (ArrControls[i] as TComboBox).ItemIndex)
     else
       DataModule1.SQLQuery.ParamByName(s).AsString:=
         (ArrControls[i] as TEdit).Text;
@@ -204,39 +195,6 @@ begin
   //DataModule1.SQLTransaction1.Commit;
   GlobalUpdate(Tag);
   Close;
-end;
-
-function TFormChangeData1.GetId(ANum: integer): integer;
-var
-  i, k, j: integer;
-  temp: TStringList;
-  TempDSource: TDataSource;
-  TempSQLQuery: TSQLQuery;
-  TempSQLTransaction: TSQLTransaction;
-begin
-  TempDSource:= TDataSource.Create(DataModule1);
-  TempSQLQuery:= TSQLQuery.Create(DataModule1);
-  TempSQLTransaction:= TSQLTransaction.Create(DataModule1);
-  TempDSource.DataSet:= TempSQLQuery;
-  TempSQLQuery.DataBase:= DataModule1.IBConnection1;
-  TempSQLQuery.Transaction:= TempSQLTransaction;
-  TempSQLTransaction.DataBase:= DataModule1.IBConnection1;
-  temp:= TStringList.Create;
-  k:= (ArrControls[ANum] as TComboBox).ItemIndex;
-  i:= MetaData.MetaTables[Tag].Fields[ANum + 1].Reference.TableTag;
-  TempSQLQuery.Close;
-  TempSQLQuery.SQL.Text:= 'SELECT * FROM ' + MetaData.MetaTables[i].Name;
-  TempSQLQuery.Open;
-  while not TempSQLQuery.EOF do
-  begin
-    temp.Append(TempSQLQuery.Fields[0].AsString);
-    TempSQLQuery.Next;
-  end;
-  TempSQLQuery.Close;
-  TempDSource.Free;
-  TempSQLQuery.Free;
-  TempSQLTransaction.Free;
-  result:= StrToInt(temp[k]);
 end;
 
 function TFormChangeData1.isNullCheckEdit(): boolean;

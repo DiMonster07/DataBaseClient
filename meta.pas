@@ -103,19 +103,19 @@ end;
    temp: TStringList;
  begin
    temp:= TStringList.Create;
-   DataModule1.SQLQuery.Close;
-   DataModule1.SQLQuery.SQL.Text:= 'SELECT * FROM ';
+   DataModule1.SQLQuery1.Close;
+   DataModule1.SQLQuery1.SQL.Text:= 'SELECT * FROM ';
    if Fields[AIndex].Reference <> nil then
-     DataModule1.SQLQuery.SQL.Text:= DataModule1.SQLQuery.SQL.Text +
+     DataModule1.SQLQuery1.SQL.Text:= DataModule1.SQLQuery1.SQL.Text +
        MetaData.MetaTables[Fields[AIndex].Reference.TableTag].Name
    else
-     DataModule1.SQLQuery.SQL.Text:= DataModule1.SQLQuery.SQL.Text +
+     DataModule1.SQLQuery1.SQL.Text:= DataModule1.SQLQuery1.SQL.Text +
        MetaData.MetaTables[Fields[AIndex].TableTag].Name;
-   DataModule1.SQLQuery.Open;
-   while not DataModule1.SQLQuery.EOF do
+   DataModule1.SQLQuery1.Open;
+   while not DataModule1.SQLQuery1.EOF do
    begin
-     temp.Append(DataModule1.SQLQuery.Fields[1].AsString);
-     DataModule1.SQLQuery.Next;
+     temp.Append(DataModule1.SQLQuery1.Fields[1].AsString);
+     DataModule1.SQLQuery1.Next;
    end;
    result:= temp;
  end;

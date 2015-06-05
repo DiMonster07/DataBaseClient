@@ -11,6 +11,15 @@ uses
 
 type
 
+  { TCellsManager }
+
+  TCellsManager = class
+  public
+    procedure DrawImg (ACanvas: TCanvas; ARect: TRect; ACountItems: integer;
+      ANum: integer);
+    procedure DrawText (ARect: TRect);
+  end;
+
   { TTimeTableForm }
 
   TTimeTableForm = class(TForm)
@@ -50,6 +59,7 @@ type
   private
     DataArray: array of array of TStringList;
   public
+    CellsManager: TCellsManager;
     FiltersManager: TFiltersManager;
     EditingManager: TEditingManager;
     procedure AddQueryFilter ();
@@ -57,48 +67,64 @@ type
     procedure SetParams (Sender: TObject);
     procedure FillGridData ();
     procedure FillCB (AList: TStringList);
-    procedure DelFilter(ATag: integer);
+    procedure DelFilter();
     procedure InsertClick (Ax, Ay: integer);
     procedure EditClick (Ax, Ay: integer);
     procedure DeleteClick (Ax, Ay: integer);
     function GetListDataCell (Ax, Ay: integer): TStringList;
     procedure FillListBox(AColList, ARowList: TStringList);
     function GetCountCheckedItems(): integer;
-    procedure UpdateHeightRows(Index: integer);
+    procedure UpdateRowsHeight(Index: integer);
     procedure UpdateHeaderVisible ();
+    procedure DragDropRecord(EndX, EndY: integer);
+    function ParsingDataCell(aRow, aCol, ANum: integer): TStringList;
   end;
 
 var
-  ListNamesFile: array [0..2] of string = ('tt_add.png','tt_edit.png',
+  ListNamesImg: array [0..2] of string = ('tt_add.png','tt_edit.png',
     'tt_del.png');
+  TimetableForm: TTimetableForm;
+
+implementation
+uses main;
+var
+  ImgArray: array [0..2] of TPicture;
+  Row, Col, kX, kY: integer;
   Margin: integer = 2;
   DefHeightFont: integer = 17;
   DefCountStr: integer = 8;
-  TimetableForm: TTimetableForm;
   DefWidthCol: integer = 350;
   CurrentRowHeight: integer;
   DefWidthImg: integer = 15;
-  SelectedCellRow, SelectedCellCol: integer;
-implementation
-var
-  Row, Col: integer;
+  HeightCurrRow: integer;
+  isDragDrop: boolean = false;
+
 {$R *.lfm}
 
 { TTimetableForm }
 
 procedure TTimetableForm.FormCreate(Sender: TObject);
+var
+  i: integer;
 begin
   FiltersManager:= TFiltersManager.Create;
   EditingManager:= TEditingManager.Create;
+  CellsManager:= TCellsManager.Create;
   FiltersPanel.Visible:= false;
   DataStringGrid.Color:= clWindow;
   DelEditingForm:= @FDelEditingForm;
+  FiltersManager.AfterApplying:= @FillGridData;
+  FiltersManager.AfterDeleting:= @DelFilter;
+  for i:=0 to high(ListNamesImg) do
+  begin
+    ImgArray[i]:= TPicture.Create;
+    ImgArray[i].LoadFromFile('icon\' + ListNamesImg[i]);
+  end;
 end;
 
 procedure TTimetableForm.SetParams (Sender: TObject);
 var
-  i, t: integer;
-  ord: string;
+  i: integer;
   temp: TStringList;
 begin
   Tag:= 8;
@@ -212,14 +238,14 @@ begin
   else
   begin
     CurrentRowHeight:= (GetCountCheckedItems + 1)*DefHeightFont;
-    UpdateHeightRows(Index);
+    UpdateRowsHeight(Index);
     DataStringGrid.Invalidate;
   end;
 end;
 
 function TTimeTableForm.GetListDataCell (Ax, Ay: integer): TStringList;
 var
-  i, k, j, RecordNum: integer;
+  i, k, RecordNum: integer;
   s: string;
   temp: TStringList;
 begin
@@ -260,21 +286,105 @@ begin
       round(DataArray[Row - 1][Col - 1].Count/DefCountStr);
 end;
 
+procedure TTimeTableForm.DragDropRecord(EndX, EndY: integer);
+var
+  i, k, key: integer;
+  tX, tY: integer;
+  NumRec: integer;
+  DataCell, temp: TStringList;
+  s: string;
+begin
+  tY:= kY - DataStringGrid.CellRect(Col, Row).Top;
+  tX:= kX - DataStringGrid.CellRect(Col, Row).Left;
+  NumRec:= tY div CurrentRowHeight;
+  DataModule1.SQLQuery.Close;
+  key:= GenUniqId();
+  DataCell:= ParsingDataCell(Row, Col, NumRec);
+  DataStringGrid.MouseToCell(EndX, EndY, Col, Row);
+  DataModule1.SQLQuery.Close;
+  DataModule1.SQLQuery.SQL.Text:= 'DELETE FROM ' +
+    MetaData.MetaTables[Tag].Name + ' WHERE ID = ' + DataCell[0];
+  DataModule1.SQLQuery.ExecSQL;
+  DataModule1.SQLQuery.Close;
+  DataCell[RowCB.ItemIndex + 1]:= DataStringGrid.Cells[0, Row];
+  DataCell[ColumnCB.ItemIndex + 1]:= DataStringGrid.Cells[Col, 0];
+  DataModule1.SQLQuery.SQL.Text:= GenInsertQuery(Tag).Text;
+  DataModule1.SQLQuery.ParamByName('p0').AsInteger:= StrToInt(DataCell[0]);
+  for i:= 1 to high(MetaData.MetaTables[Tag].Fields) do
+  begin
+    s:= 'p' + IntToStr(i);
+    if MetaData.MetaTables[Tag].Fields[i].Reference <> nil then
+    begin
+      temp:= MetaData.MetaTables[Tag].GetDataFieldOfIndex(i);
+      DataModule1.SQLQuery.ParamByName(s).AsInteger:=
+        GetId(Tag, i - 1, temp.IndexOf(DataCell[i]))
+    end
+    else
+      DataModule1.SQLQuery.ParamByName(s).AsString:= DataCell[i];
+  end;
+  DataModule1.SQLQuery.ExecSQL;
+  //DataModule1.SQLTransaction1.Commit;
+  GlobalUpdate(Tag);
+end;
+
+function TTimeTableForm.ParsingDataCell(aRow, aCol,
+  ANum: integer): TStringList;
+var
+  i, c: integer;
+  temp, curr: TStringList;
+  s: string;
+begin
+  c:= 0;
+  temp:= TStringList.Create;
+  curr:= DataArray[aRow - 1][aCol - 1];
+  for i:= DefCountStr*ANum to DefCountStr*(ANum + 1) - 2 do
+  begin
+    s:= curr[i];
+    delete(s, 1, pos(':', s) + 1);
+    temp.Append(s);
+  end;
+  result:= temp;
+end;
+
 procedure TTimeTableForm.DataStringGridMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   DataStringGrid.MouseToCell(x, y, Col, Row);
+  kX:= x; kY:= y;
 end;
 
 procedure TTimeTableForm.DataStringGridMouseUp(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
-  i, k, Summ, count: integer;
-  RightCorner, LeftCorner: integer;
+  i, count: integer;
+  tCol, tRow: integer;
   Fy, Fx, NumCol, r: integer;
+  s: string;
+  temp: TStringList;
 begin
+  DataStringGrid.MouseToCell(x, y, tCol, tRow);
+  if (tCol = 0) or (tRow = 0) then exit;
+  if ((Row <> tRow) or (Col <> tCol)) and (DataArray[Row - 1][Col - 1] <> nil)
+    and (DataArray[Row - 1][Col - 1].Count <> 0) then
+  begin
+    DragDropRecord(x, y);
+    exit;
+  end;
+  HeightCurrRow:= DataStringGrid.RowHeights[Row];
   DataStringGrid.MouseToCell(x, y, Col, Row);
-  if (Col = 0) or (Row = 0) then exit;
+  if Button = mbRight then
+  begin
+    temp:= TStringList.Create;
+    ProgramForm.DirItem.Items[Tag].Click;
+    FormsOfTables.FForms[Tag].FiltersManager.DeleteAllFilters();
+    temp.Append(IntToStr(RowCB.ItemIndex)); temp.Append(IntToStr(4));
+    temp.Append(DataStringGrid.Cells[0, Row]);
+    temp.Append(IntToStr(ColumnCB.ItemIndex)); temp.Append(IntToStr(4));
+    temp.Append(DataStringGrid.Cells[Col, 0]);
+    FormsOfTables.FForms[Tag].AddSomeFilters(2, temp);
+    exit;
+  end;
+  count:= GetCountCheckedItems + 1;
   Fy:= y - DataStringGrid.CellRect(Col, Row).Top;
   Fx:= x - DataStringGrid.CellRect(Col, Row).Left;
   if (Fx < DefWidthCol - Margin) and (Fx > DefWidthCol - DefWidthImg - Margin) then
@@ -300,82 +410,85 @@ begin
   end;
 end;
 
+ { TCellsManager }
+
+ procedure TCellsManager.DrawImg (ACanvas: TCanvas; ARect: TRect;
+   ACountItems: integer; ANum: integer);
+ var
+   i: integer;
+ begin
+   with ACanvas do
+     for i:= 1 to 2 do
+     begin
+       Draw(DefWidthCol + aRect.Left - ImgArray[i].Width - Margin,
+         aRect.Top + (i)*ImgArray[i].Height + 2*Margin +
+         ACountItems*DefHeightFont*ANum, ImgArray[i].Graphic);
+     end;
+ end;
+
+ procedure TCellsManager.DrawText (ARect: TRect);
+ begin
+
+ end;
+
  { DataStringGrid }
 
 procedure TTimeTableForm.DataStringGridDrawCell(Sender: TObject; aCol,
   aRow: Integer; aRect: TRect; aState: TGridDrawState);
 var
-  i, k, c, j,  count: integer;
-  img: TPicture;
+  i, c, j,  count: integer;
 begin
-  if length(DataArray) <> 0 then
+  if (length(DataArray) <> 0) and (aRow <> 0) and (aCol <> 0) then
   begin
     with DataStringGrid.Canvas do
     begin
       count:= GetCountCheckedItems + 1;
-      img:= TPicture.Create;
-      if (aRow <> 0) and (aCol <> 0) then
+      Draw(DefWidthCol + aRect.Left - ImgArray[0].Width - Margin, aRect.Top +
+        Margin, ImgArray[0].Graphic);
+      if (DataArray[aRow - 1][aCol - 1] <> nil) and
+        (DataArray[aRow - 1][aCol - 1].Count <> 0) then
       begin
-        Img.LoadFromFile('icon\' + ListNamesFile[0]);
-        Draw(DefWidthCol + aRect.Left - Img.Width - Margin, aRect.Top + Margin,
-          Img.Graphic);
-        if (DataArray[aRow - 1][aCol - 1] <> nil) and
-          (DataArray[aRow - 1][aCol - 1].Count <> 0) then
+        CellsManager.DrawImg (DataStringGrid.Canvas, aRect, Count, 0);
+        c:= DataArray[aRow - 1][aCol - 1].Count div 8;
+        j:= -1;
+        for i:= 0 to DataArray[aRow - 1][aCol - 1].Count - 1 do
         begin
-          for i:= 1 to 2 do
+          if DataArray[aRow - 1][aCol - 1][i] <> '' then
           begin
-            Img.LoadFromFile('icon\' + ListNamesFile[i]);
-            Draw(DefWidthCol + aRect.Left - Img.Width - Margin,
-              aRect.Top + Margin + i*Img.Height + Margin, Img.Graphic);
-          end;
-          c:= round(DataArray[aRow - 1][aCol - 1].Count/8);
-          if DataStringGrid.RowHeights[aRow] < c*CurrentRowHeight then
-          begin
-            Font.Color:= clGreen;
-            Font.Bold;
-            Font.Size:= 10;
-            TextOut(DefWidthCol + aRect.Left - 27 - Margin,
-              aRect.Top + DataStringGrid.RowHeights[aRow] - 20, ' ↓ ' +
-              IntToStr(c - round(DataStringGrid.RowHeights[aRow]/
-              CurrentRowHeight)));
-            Font.Color:= clBlack;
-            Font.Size:= 0;
-          end;
-          j:= -1;
-          for i:= 0 to DataArray[aRow - 1][aCol - 1].Count - 1 do
-          begin
-            if DataArray[aRow - 1][aCol - 1][i] <> '' then
-            begin
-              if DataListBox.Checked[i - (i div DefCountStr)*DefCountStr] then
-              begin
-                inc(j);
-                TextOut(aRect.Left + Margin, aRect.Top +
-                  j*DefHeightFont, DataArray[aRow - 1][aCol - 1][i]);
-              end;
-            end
-            else
-            if i <> DataArray[aRow - 1][aCol - 1].Count - 1 then
+            if DataListBox.Checked[i - (i div DefCountStr)*DefCountStr] then
             begin
               inc(j);
-              TextOut(aRect.Left + Margin, aRect.Top + j*DefHeightFont,
-                DataArray[aRow - 1][aCol - 1][i]);
-              for k:= 1 to 2 do
-              begin
-                Img.LoadFromFile('icon\' + ListNamesFile[k]);
-                Draw(DefWidthCol + aRect.Left - Img.Width - Margin,
-                  aRect.Top + (k)*Img.Height + 2*Margin +
-                  count*DefHeightFont*(round(i/DefCountStr)), Img.Graphic);
-              end;
+              TextOut(aRect.Left + Margin, aRect.Top +
+                j*DefHeightFont, DataArray[aRow - 1][aCol - 1][i]);
             end;
+          end
+          else
+          if i <> DataArray[aRow - 1][aCol - 1].Count - 1 then
+          begin
+            inc(j);
+            TextOut(aRect.Left + Margin, aRect.Top + j*DefHeightFont,
+              DataArray[aRow - 1][aCol - 1][i]);
+            CellsManager.DrawImg (DataStringGrid.Canvas, aRect, Count,
+              round(i/DefCountStr));
           end;
         end;
+        if DataStringGrid.RowHeights[aRow] < c*CurrentRowHeight then
+        begin
+          Font.Color:= clGreen;
+          Font.Bold;
+          Font.Size:= 10;
+          TextOut(DefWidthCol + aRect.Left - 27 - Margin,
+            aRect.Top + DataStringGrid.RowHeights[aRow] - 20, ' ↓ ' +
+            IntToStr(c - DataStringGrid.RowHeights[aRow] div CurrentRowHeight));
+          Font.Color:= clBlack;
+          Font.Size:= 0;
+        end;
       end;
-      Img.Free;
     end;
   end;
 end;
 
-procedure TTimeTableForm.UpdateHeightRows(Index: integer);
+procedure TTimeTableForm.UpdateRowsHeight(Index: integer);
 var
   k, c: integer;
 begin
@@ -398,9 +511,8 @@ end;
 
 procedure TTimetableForm.ChangeCaptionColumn(AColList, ARowList: TStringList);
 var
-  i, k, c: integer;
+  i, k: integer;
 begin
-  c:= GetCountCheckedItems;
   for i:= 1 to AColList.Count do
   begin
     DataStringGrid.ColWidths[i]:= DefWidthCol;
@@ -418,20 +530,20 @@ end;
 procedure TTimetableForm.FillGridData ();
 var
   ColTemp, RowTemp: TStringList;
-  i, j, k, c, r: integer;
-  procedure FillCell (ACol, ARow: integer);
+  i, c, r: integer;
+  procedure FillCell (ARow, ACol: integer);
   var
     k: integer;
     s: string;
   begin
-    if DataArray[r][c] = nil then
-      DataArray[r][c]:= TStringList.Create ;
+    if DataArray[aRow][aCol] = nil then
+      DataArray[aRow][aCol]:= TStringList.Create ;
     for k:=0 to SQLQuery1.FieldCount - 1 do
     begin
       s:= MetaData.MetaTables[Tag].Fields[k].Caption;
-      DataArray[r][c].Append(s + ': ' + SQLQuery1.Fields[k].AsString);
+      DataArray[aRow][aCol].Append(s + ': ' + SQLQuery1.Fields[k].AsString);
     end;
-    DataArray[r][c].Append('');
+    DataArray[aRow][aCol].Append('');
   end;
 begin
   SQLQuery1.Close;
@@ -446,15 +558,13 @@ begin
   SetLength(DataArray, 0);
   SetLength(DataArray, RowTemp.Count);
   for i:= 0 to RowTemp.Count - 1 do
-  begin
     SetLength(DataArray[i], ColTemp.Count);
-  end;
   RowTemp.IndexOf(SQLQuery1.Fields[RowCB.ItemIndex + 1].AsString);
   while not SQLQuery1.EOF do
   begin
     r:= RowTemp.IndexOf(SQLQuery1.Fields[RowCB.ItemIndex + 1].AsString);
     c:= ColTemp.IndexOf(SQLQuery1.Fields[ColumnCB.ItemIndex + 1].AsString);
-    FillCell(c, r);
+    FillCell(r, c);
     SQLQuery1.Next;
   end;
   ChangeCaptionColumn(ColTemp, RowTemp);
@@ -464,9 +574,8 @@ end;
 
 { Filters }
 
-procedure TTimetableForm.DelFilter(ATag: integer);
+procedure TTimetableForm.DelFilter();
 begin
-  FiltersManager.DelFilter(ATag);
   if FiltersManager.GetCountFilters = 0 then
   begin
     FiltersManager.isFiltred:= false;
@@ -477,8 +586,6 @@ begin
 end;
 
 procedure TTimetableForm.AddQueryFilter ();
-var
-  i, c: integer;
 begin
   SQLQuery1.Close;
   FiltersManager.GenQueryFilter(SQLQuery1, Tag);
@@ -502,23 +609,26 @@ end;
 procedure TTimeTableForm.InsertClick (Ax, Ay: integer);
 begin
   EditingManager.OpenFormEditingTable (ctInsert, Tag, GetListDataCell(Ax, Ay));
-  DataStringGrid.Col:= Col;
-  DataStringGrid.Row:= Row;
+  if (Col > 0) and (Row > 0) then
+    DataStringGrid.Selection:= DataStringGrid.CellRect(Col, Row);
+  DataStringGrid.RowHeights[Row]:= HeightCurrRow;
 end;
 
 procedure TTimeTableForm.EditClick (Ax, Ay: integer);
 begin
   EditingManager.OpenFormEditingTable (ctEdit, Tag, GetListDataCell(Ax, Ay));
-  DataStringGrid.Col:= Col;
-  DataStringGrid.Row:= Row;
+  if (Col > 0) and (Row > 0) then
+    DataStringGrid.Selection:= DataStringGrid.CellRect(Col, Row);
+  DataStringGrid.RowHeights[Row]:= HeightCurrRow;
 end;
 
 procedure TTimeTableForm.DeleteClick (Ax, Ay: integer);
 begin
   EditingManager.DeleteRecord(StrToInt(GetListDataCell(Ax, Ay)[0]), Tag);
   FillGridData();
-  DataStringGrid.Col:= Col;
-  DataStringGrid.Row:= Row;
+  if (Col > 0) and (Row > 0) then
+    DataStringGrid.Selection:= DataStringGrid.CellRect(Col, Row);
+  DataStringGrid.RowHeights[Row]:= HeightCurrRow;
 end;
 
 end.

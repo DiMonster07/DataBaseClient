@@ -16,6 +16,7 @@ function GenUniqId (): integer;
 function GenInsertQuery(ANum: integer): TStringList;
 function GenUpdateQuery(ANum: integer): TStringList;
 function GetNameField(ATag, Index: integer): string;
+function GetId(ATag, ANum, Index: integer): integer;
 
 implementation
 
@@ -166,6 +167,38 @@ begin
   end;
   temp.Append('WHERE ID = :p0' );
   result:= temp;
+end;
+
+function GetId(ATag, ANum, Index: integer): integer;
+var
+  i, k, j: integer;
+  temp: TStringList;
+  TempDSource: TDataSource;
+  TempSQLQuery: TSQLQuery;
+  TempSQLTransaction: TSQLTransaction;
+begin
+  TempDSource:= TDataSource.Create(DataModule1);
+  TempSQLQuery:= TSQLQuery.Create(DataModule1);
+  TempSQLTransaction:= TSQLTransaction.Create(DataModule1);
+  TempDSource.DataSet:= TempSQLQuery;
+  TempSQLQuery.DataBase:= DataModule1.IBConnection1;
+  TempSQLQuery.Transaction:= TempSQLTransaction;
+  TempSQLTransaction.DataBase:= DataModule1.IBConnection1;
+  temp:= TStringList.Create;
+  i:= MetaData.MetaTables[ATag].Fields[ANum + 1].Reference.TableTag;
+  TempSQLQuery.Close;
+  TempSQLQuery.SQL.Text:= 'SELECT * FROM ' + MetaData.MetaTables[i].Name;
+  TempSQLQuery.Open;
+  while not TempSQLQuery.EOF do
+  begin
+    temp.Append(TempSQLQuery.Fields[0].AsString);
+    TempSQLQuery.Next;
+  end;
+  TempSQLQuery.Close;
+  TempDSource.Free;
+  TempSQLQuery.Free;
+  TempSQLTransaction.Free;
+  result:= StrToInt(temp[Index]);
 end;
 
 function GenUniqId (): integer;

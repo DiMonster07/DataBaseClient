@@ -1,11 +1,11 @@
 object FormTable: TFormTable
-  Left = 903
+  Left = 373
   Height = 400
-  Top = 205
-  Width = 700
+  Top = 270
+  Width = 1117
   Caption = 'FormTable'
   ClientHeight = 400
-  ClientWidth = 700
+  ClientWidth = 1117
   Constraints.MinHeight = 400
   Constraints.MinWidth = 700
   Icon.Data = {
@@ -153,7 +153,7 @@ object FormTable: TFormTable
     Left = 32
     Height = 398
     Top = 0
-    Width = 612
+    Width = 1029
     Anchors = [akTop, akLeft, akRight, akBottom]
     Color = clWindow
     Columns = <>
@@ -186,7 +186,7 @@ object FormTable: TFormTable
     VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast]
   end
   object FiltersPanel: TPanel
-    Left = 272
+    Left = 689
     Height = 398
     Top = 2
     Width = 430
@@ -675,7 +675,7 @@ object FormTable: TFormTable
     OnClick = EditBtnClick
   end
   object AddFiltersPanelBtn: TSpeedButton
-    Left = 648
+    Left = 1065
     Height = 60
     Top = 335
     Width = 48
