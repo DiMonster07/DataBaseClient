@@ -145,6 +145,7 @@ object FormChangeData1: TFormChangeData1
     0000
   }
   OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
   LCLVersion = '1.2.4.0'
   object IdLabel: TLabel
     Left = 8

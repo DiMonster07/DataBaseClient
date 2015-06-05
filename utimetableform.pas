@@ -50,8 +50,10 @@ type
       aRect: TRect; aState: TGridDrawState);
     procedure DataStringGridMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure DataStringGridMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure DataStringGridMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure DataStringGridShowHint(Sender: TObject; HintInfo: PHintInfo);
     procedure FormCreate(Sender: TObject);
     procedure CBChange(Sender: TObject);
     procedure OpenFiltersPanelBtnClick(Sender: TObject);
@@ -90,6 +92,7 @@ uses main;
 var
   ImgArray: array [0..2] of TPicture;
   Row, Col, kX, kY: integer;
+  cX, cY: integer;
   Margin: integer = 2;
   DefHeightFont: integer = 17;
   DefCountStr: integer = 8;
@@ -353,6 +356,13 @@ begin
   kX:= x; kY:= y;
 end;
 
+procedure TTimeTableForm.DataStringGridMouseMove(Sender: TObject;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  cX:= x;
+  cY:= y;
+end;
+
 procedure TTimeTableForm.DataStringGridMouseUp(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
@@ -408,6 +418,26 @@ begin
        end;
     end;
   end;
+end;
+
+procedure TTimeTableForm.DataStringGridShowHint(Sender: TObject;
+  HintInfo: PHintInfo);
+begin
+ { DataStringGrid.MouseToCell(cX, cY, tCol, tRow);
+  if (tRow = 0) or (tCol = 0) then exit;
+  if (tRow <> Row) or (tCol <> Col) then
+  begin
+    DataStringGrid.Hint:= '';
+    exit;
+  end;
+  if (DataArray[tRow -1][tCol - 1] = nil) or
+    (DataArray[tRow -1][tCol - 1].Count = 0) then
+  begin
+    DataStringGrid.Hint:= '';
+    exit;
+  end
+  else
+    DataStringGrid.Hint:= DataArray[tRow - 1][tCol - 1].Text;  }
 end;
 
  { TCellsManager }
@@ -609,6 +639,7 @@ end;
 procedure TTimeTableForm.InsertClick (Ax, Ay: integer);
 begin
   EditingManager.OpenFormEditingTable (ctInsert, Tag, GetListDataCell(Ax, Ay));
+  EditingManager.SetItemIndex(RowCB.ItemIndex, Row - 1, ColumnCB.ItemIndex, Col - 1);
   if (Col > 0) and (Row > 0) then
     DataStringGrid.Selection:= DataStringGrid.CellRect(Col, Row);
   DataStringGrid.RowHeights[Row]:= HeightCurrRow;

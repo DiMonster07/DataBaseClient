@@ -129,12 +129,17 @@ object TimetableForm: TTimetableForm
     Top = 112
     Width = 836
     Anchors = [akTop, akLeft, akRight, akBottom]
+    CellHintPriority = chpAllNoDefault
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goThumbTracking, goSmoothScroll]
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 2
     OnDblClick = DataStringGridDblClick
     OnDrawCell = DataStringGridDrawCell
     OnMouseDown = DataStringGridMouseDown
+    OnMouseMove = DataStringGridMouseMove
     OnMouseUp = DataStringGridMouseUp
+    OnShowHint = DataStringGridShowHint
   end
   object FiltersPanel: TPanel
     Left = 478

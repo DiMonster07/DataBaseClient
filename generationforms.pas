@@ -94,6 +94,7 @@ type
     procedure FillComboBox(AList: TStringList; ANum: integer; Index: integer);
     function isFormOpenedForId(AId: integer): TFormChangeData1;
     function GetCountForms(): integer;
+    procedure SetItemIndex(ANum, AIndex, ANum1, AIndex1: integer);
   end;
 
   { TFiltersManager }
@@ -286,7 +287,7 @@ begin
           begin
             CreateComboBox(temp, Fields[i].Caption, Fields[i].Width);
             k:= high(ArrControls);
-            if AChangeType = ctEdit then
+            if (AChangeType = ctEdit) then
               (ArrControls[k] as TComboBox).ItemIndex:= temp.IndexOf(Alist[i])
             else
               (ArrControls[k] as TComboBox).ItemIndex:= Random(temp.Count);
@@ -307,6 +308,15 @@ begin
     ArrControls[0].Tag:= high(FFormsChange);
     CreateBtn;
     Show;
+  end;
+end;
+
+procedure TEditingManager.SetItemIndex(ANum, AIndex, ANum1, AIndex1: integer);
+begin
+  with FFormsChange[high(FFormsChange)] do
+  begin
+    (ArrControls[ANum] as TComboBox).ItemIndex:= AIndex;
+    (ArrControls[ANum1] as TComboBox).ItemIndex:= AIndex1;
   end;
 end;
 
