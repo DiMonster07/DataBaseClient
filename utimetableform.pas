@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, sqldb, db, FileUtil, Forms, Controls, Graphics, Dialogs,
-  DBGrids, DbCtrls, ExtCtrls, StdCtrls, Buttons, Grids, CheckLst, FormChangeData,
-  meta, SqlGenerator, DBConnection, GenerationForms, windows;
+  DBGrids, DbCtrls, ExtCtrls, StdCtrls, Buttons, Grids, CheckLst, Menus, FormChangeData,
+  meta, SqlGenerator, DBConnection, GenerationForms, windows, ComObj, Variants;
 
 type
 
@@ -23,12 +23,15 @@ type
   { TTimeTableForm }
 
   TTimeTableForm = class(TForm)
+    MainMenu1: TMainMenu;
+    ExpItem: TMenuItem;
     RowListBox: TCheckListBox;
     DataListBox: TCheckListBox;
     ColListBox: TCheckListBox;
     DataSource1: TDataSource;
     Label1: TLabel;
     ApplyBtn: TSpeedButton;
+    SaveDialog1: TSaveDialog;
     SQLQuery1: TSQLQuery;
     SQLTransaction1: TSQLTransaction;
     ColumnCB: TComboBox;
@@ -56,6 +59,7 @@ type
     procedure DataStringGridShowHint(Sender: TObject; HintInfo: PHintInfo);
     procedure FormCreate(Sender: TObject);
     procedure CBChange(Sender: TObject);
+    procedure ExpItemClick(Sender: TObject);
     procedure OpenFiltersPanelBtnClick(Sender: TObject);
     procedure RowListBoxItemClick(Sender: TObject; Index: integer);
   private
@@ -79,7 +83,12 @@ type
     procedure UpdateRowsHeight(Index: integer);
     procedure UpdateHeaderVisible ();
     procedure DragDropRecord(EndX, EndY: integer);
+    function GetTextSaveToHTML(): TStringList;
     function ParsingDataCell(aRow, aCol, ANum: integer): TStringList;
+    function GetCountColCheckedItems(): integer;
+    function GetDataStringGrid (): TStringList;
+    function GetDataSelection (): TStringList;
+    procedure SaveInExcel(FileName: AnsiString);
   end;
 
 var
@@ -100,6 +109,7 @@ var
   CurrentRowHeight: integer;
   DefWidthImg: integer = 15;
   HeightCurrRow: integer;
+  isMouseDown: boolean = false;
   isDragDrop: boolean = false;
 
 {$R *.lfm}
@@ -144,9 +154,203 @@ begin
   ApplyBtnClick(Self);
 end;
 
+function TTimeTableForm.GetCountColCheckedItems(): integer;
+var
+  i, k: integer;
+begin
+  k:= 0;
+  for i:=0 to ColListBox.Count - 1 do
+    if ColListBox.Checked[i] then inc(k);
+  Result:= k;
+end;
+
 procedure TTimeTableForm.CBChange(Sender: TObject);
 begin
   ApplyBtn.Enabled:= true;
+end;
+
+procedure TTimeTableForm.ExpItemClick(Sender: TObject);
+var
+  s: string;
+  stream: TFileStream;
+  temp: TStringList;
+begin
+  if SaveDialog1.Execute then
+  begin
+    s:= SaveDialog1.FileName;
+    case SaveDialog1.FilterIndex of
+      1: begin
+           temp:= TStringList.Create;
+           try
+             Stream := TFileStream.Create(Utf8ToAnsi(s), fmOpenReadWrite);
+           except
+             Stream := TFileStream.Create(Utf8ToAnsi(s), fmCreate);
+           end;
+           temp.Append(GetTextSaveToHTML().Text);
+           temp.SaveToStream(stream);
+           temp.free;
+           Stream.Free;
+           exit;
+         end;
+      2: begin
+           SaveInExcel(s);
+         end;
+    end;
+  end;
+end;
+
+procedure TTimeTableForm.SaveInExcel(FileName: string);
+var
+  ExlApp, Sheet, Workbook, ArrayData, Range, Cell1, Cell2, ff: OleVariant;
+  i, j, k, t, r, c:integer;
+  s: string;
+  temp: TStringList;
+begin
+  ExlApp := CreateOleObject('Excel.Application');
+  ExlApp.Visible := false;
+  Workbook:= ExlApp.Workbooks.Add;
+  Sheet := ExlApp.Workbooks[1].WorkSheets[1];
+  Sheet.name:= 'TimeTable';
+  r:=DataStringGrid.RowCount;
+  c:=DataStringGrid.ColCount;
+  temp:= TStringList.Create;
+  ArrayData := VarArrayCreate([1, r, 1, c], varVariant);
+  for i := 1 to r do
+    ArrayData[i, 1] := DataStringGrid.Cells[0, i - 1];
+  for j := 1 to c do
+    ArrayData[1, j] := DataStringGrid.Cells[j - 1, 0];
+  for i := 0 to r - 2 do
+    for j := 0 to c - 2 do
+    begin
+      if RowListBox.Checked[i] and ColListBox.Checked[j] then
+        if (DataArray[i][j]<> nil) and (DataArray[i][j].Count <> 0) then
+          for k:= 0 to DataArray[i][j].Count - 1 do
+            if DataArray[i][j][k] <> '' then
+            begin
+              if (DataListBox.Checked[k - (k div DefCountStr)*DefCountStr]) then
+                temp.Append(DataArray[i ][j ][k]);
+            end
+            else
+              temp.Append(' ');
+      ArrayData[i + 2, j + 2] := temp.text;
+      temp.clear;
+    end;
+  Cell1 := WorkBook.WorkSheets[1].Cells[1, 1];
+  Cell2 := WorkBook.WorkSheets[1].Cells[r + 1, c + 1];
+  Range := WorkBook.WorkSheets[1].Range[Cell1, Cell2];
+  Range.Value := ArrayData;
+  for i:= 1 to c do
+    WorkBook.WorkSheets[1].Columns.Item[i].Autofit;
+  ExlApp.DisplayAlerts := False;
+  ExlApp.Visible := true;
+  ff:= FileName;
+  Workbook.SaveAs(ff);
+  ExlApp.Quit;
+  ExlApp := Unassigned;
+  Sheet := Unassigned;
+end;
+
+function TTimeTableForm.GetTextSaveToHTML(): TStringList;
+var
+  temp: TStringList;
+begin
+  temp:= TStringList.Create;
+  temp.Append('<html><head><meta charset="utf-8">' + '<style>' +
+  'table { width: ' + IntToStr(DefWidthCol*GetCountColCheckedItems()) + 'px;' +
+  'border: 1px solid #000; border-collapse:collapse;}' +
+  'td { border: 1px solid #000; padding: 5px; vertical-align: top;}' +
+  '</style></head><body>');
+  temp.Append(GetDataSelection ().Text);
+  temp.Append('<table>');
+  temp.Append(GetDataStringGrid().Text);
+  temp.Append('</table></html>');
+  result:= temp;
+end;
+
+function TTimeTableForm.GetDataSelection (): TStringList;
+var
+  temp: TStringList;
+  i: integer;
+begin
+  temp:= TStringList.Create;
+  temp.Append('<table style="width: 900px;">');
+  temp.Append('<p>Параметры выбора данных: <br></p><tr><td>');
+  temp.Append('Строки: ' + RowCB.Caption + '<br>' +
+    'Столбцы: ' + ColumnCB.Caption);
+  temp.Append('</td><td>' + MetaData.MetaTables[RowCB.ItemIndex].Caption +
+    ':<ul>');
+  for i:= 0 to ColListBox.Count - 1 do
+    if ColListBox.Checked[i] then
+       temp.Append('<li>' + DataStringGrid.Cells[i + 1, 0] + '</li> ');
+  temp.Append('</ul></td><td>');
+  temp.Append(MetaData.MetaTables[ColumnCB.ItemIndex].Caption + ':<ul>');
+  for i:= 0 to RowListBox.Count - 1 do
+    if RowListBox.Checked[i] then
+       temp.Append('<li>' + DataStringGrid.Cells[0, i + 1] + '</li> ');
+  temp.Append('</ul></td><td>Фильтры: <br><ul>');
+  for i:= 0 to high(FiltersManager.Filters) do
+    if FiltersManager.Filters[i].isApply then
+    begin
+      with FiltersManager.Filters[i]do
+      begin
+         temp.Append('<li>' + NameBox.Caption + ' ' + ActionBox.Caption + ' ' +
+           ValueEdit.Caption + '</li>');
+      end;
+    end;
+  temp.Append('</ul></td></tr>');
+  temp.Append('</table>');
+  result:= temp;
+end;
+
+function TTimeTableForm.GetDataStringGrid (): TStringList;
+var
+  temp: TStringList;
+  i, j, k: integer;
+begin
+  temp:= TStringList.Create;
+  temp.Append('<br><tr>');
+  temp.Append('<td>');
+  temp.Append(RowCB.Caption);
+  temp.Append('</td>');
+  for k:= 0 to ColListBox.Count - 1 do
+    if ColListBox.Checked[k] then
+    begin
+      temp.Append('<td>');
+      temp.Append(DataStringGrid.Cells[k + 1, 0]);
+      temp.Append('</td>');
+    end;
+  temp.Append('</tr>');
+  for i:= 0 to high(DataArray) do
+  begin
+    if RowListBox.Checked[i] then
+    begin
+      temp.Append('<tr>');
+      temp.Append('<td>');
+      temp.Append(DataStringGrid.Cells[0, i + 1]);
+      temp.Append('</td>');
+      for k:= 0 to high(DataArray[i]) do
+        if ColListBox.Checked[k] then
+        begin
+          temp.Append('<td>');
+          if (DataArray[i][k]<> nil) and (DataArray[i][k].Count <> 0) then
+          begin
+            for j:=0 to DataArray[i][k].Count - 1 do
+            begin
+              if DataArray[i][k][j] <> '' then
+              begin
+                if (DataListBox.Checked[j - (j div DefCountStr)*DefCountStr]) then
+                  temp.Append(AnsiString(DataArray[i][k][j]) + '<br>');
+              end
+              else
+                  temp.Append('<br>');
+            end;
+          end;
+          temp.Append('</td>');
+        end;
+      temp.Append('</tr>');
+    end;
+  end;
+  result:= temp;
 end;
 
 procedure TTimeTableForm.FillListBox(AColList, ARowList: TStringList);
@@ -291,7 +495,7 @@ end;
 
 procedure TTimeTableForm.DragDropRecord(EndX, EndY: integer);
 var
-  i, k, key: integer;
+  i, key: integer;
   tX, tY: integer;
   NumRec: integer;
   DataCell, temp: TStringList;
@@ -354,6 +558,7 @@ procedure TTimeTableForm.DataStringGridMouseDown(Sender: TObject;
 begin
   DataStringGrid.MouseToCell(x, y, Col, Row);
   kX:= x; kY:= y;
+  isMouseDown:= true;
 end;
 
 procedure TTimeTableForm.DataStringGridMouseMove(Sender: TObject;
@@ -361,6 +566,7 @@ procedure TTimeTableForm.DataStringGridMouseMove(Sender: TObject;
 begin
   cX:= x;
   cY:= y;
+  if isMouseDown then isDragDrop:= true;
 end;
 
 procedure TTimeTableForm.DataStringGridMouseUp(Sender: TObject;
@@ -418,26 +624,13 @@ begin
        end;
     end;
   end;
+  isMouseDown:= false;
 end;
 
 procedure TTimeTableForm.DataStringGridShowHint(Sender: TObject;
   HintInfo: PHintInfo);
 begin
- { DataStringGrid.MouseToCell(cX, cY, tCol, tRow);
-  if (tRow = 0) or (tCol = 0) then exit;
-  if (tRow <> Row) or (tCol <> Col) then
-  begin
-    DataStringGrid.Hint:= '';
-    exit;
-  end;
-  if (DataArray[tRow -1][tCol - 1] = nil) or
-    (DataArray[tRow -1][tCol - 1].Count = 0) then
-  begin
-    DataStringGrid.Hint:= '';
-    exit;
-  end
-  else
-    DataStringGrid.Hint:= DataArray[tRow - 1][tCol - 1].Text;  }
+
 end;
 
  { TCellsManager }
@@ -470,6 +663,12 @@ var
 begin
   if (length(DataArray) <> 0) and (aRow <> 0) and (aCol <> 0) then
   begin
+   { if isDragDrop and (Row <> aRow) and (Col <> aCol) then
+    begin
+      DataStringGrid.Canvas.Brush.Color:= clInfoBk;
+      DataStringGrid.Canvas.FillRect(DataStringGrid.CellRect(Col, Row));
+      isDragDrop:= false;
+    end;   }
     with DataStringGrid.Canvas do
     begin
       count:= GetCountCheckedItems + 1;
@@ -515,6 +714,7 @@ begin
         end;
       end;
     end;
+    DataStringGrid.Canvas.Brush.Color:= clWhite;
   end;
 end;
 

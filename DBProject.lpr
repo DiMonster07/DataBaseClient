@@ -7,7 +7,8 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, main, meta, DBConnection, GenerationForms, FormChangeData, ViewManager, FormsManager, SqlGenerator, Utimetableform;
+  Forms, main, meta, DBConnection, GenerationForms, FormChangeData, ViewManager,
+  FormsManager, SqlGenerator, Utimetableform;
 
 {$R *.res}
 

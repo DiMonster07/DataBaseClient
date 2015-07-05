@@ -1,13 +1,14 @@
 object TimetableForm: TTimetableForm
-  Left = 596
+  Left = 815
   Height = 550
-  Top = 157
+  Top = 181
   Width = 900
   Caption = 'TimetableForm'
-  ClientHeight = 550
+  ClientHeight = 530
   ClientWidth = 900
   Constraints.MinHeight = 550
   Constraints.MinWidth = 900
+  Menu = MainMenu1
   OnCreate = FormCreate
   LCLVersion = '1.2.4.0'
   object OptionsPanel: TPanel
@@ -111,7 +112,7 @@ object TimetableForm: TTimetableForm
   object OpenFiltersPanelBtn: TSpeedButton
     Left = 840
     Height = 72
-    Top = 474
+    Top = 454
     Width = 56
     Anchors = [akRight, akBottom]
     Caption = '+'
@@ -125,7 +126,7 @@ object TimetableForm: TTimetableForm
   end
   object DataStringGrid: TStringGrid
     Left = 0
-    Height = 440
+    Height = 420
     Top = 112
     Width = 836
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -143,17 +144,17 @@ object TimetableForm: TTimetableForm
   end
   object FiltersPanel: TPanel
     Left = 478
-    Height = 440
+    Height = 420
     Top = 112
     Width = 422
     Anchors = [akTop, akRight, akBottom]
-    ClientHeight = 440
+    ClientHeight = 420
     ClientWidth = 422
     TabOrder = 1
     object AddFilterBtn: TSpeedButton
       Left = 280
       Height = 40
-      Top = 394
+      Top = 374
       Width = 136
       Anchors = [akRight, akBottom]
       Caption = 'Добавить фильтр'
@@ -192,5 +193,18 @@ object TimetableForm: TTimetableForm
     Database = DataModule1.IBConnection1
     left = 184
     top = 288
+  end
+  object MainMenu1: TMainMenu
+    left = 792
+    top = 24
+    object ExpItem: TMenuItem
+      Caption = 'Экспортировать таблицу'
+      OnClick = ExpItemClick
+    end
+  end
+  object SaveDialog1: TSaveDialog
+    Filter = '.html|.html|.xlsx|.xls'
+    left = 736
+    top = 24
   end
 end
